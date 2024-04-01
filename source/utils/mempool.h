@@ -74,13 +74,6 @@ public:
         blocks[i_object].is_free = true;
     }
 
-    inline auto get_block_size() const noexcept {
-        return sizeof(Block);
-    }
-    inline auto get_n_blocks_free() const noexcept {
-        return (blocks.size() - i_next_free);
-    }
-
     // delete default, copy/move ctors as well as copy/move assignment op's.
     // this avoids unintended copy/move construction, as well as copy/move assignment
     MemPool() = delete;
@@ -88,6 +81,17 @@ public:
     MemPool(const MemPool&&) = delete;
     MemPool& operator=(const MemPool&) = delete;
     MemPool& operator=(const MemPool&&) = delete;
+
+    // todo: remove this method in non-testing builds
+    /** Counts the number of free blocks. This is currently for testing only. */
+    inline auto get_n_blocks_free() const noexcept {
+        int n_free{ };
+        for (const auto& b: blocks) {
+            if (b.is_free)
+                ++n_free;
+        }
+        return n_free;
+    }
 
 private:
     /**

@@ -1,62 +1,69 @@
-#include <catch2/catch_test_macros.hpp>
-#include "utils/threading.h"
+#include "gtest/gtest.h"
 #include <iostream>
-#include <cstdint>
 #include <thread>
-#include <numeric>
 #include <vector>
-
 #include "utils/mempool.h"
 
 
-// test data structure to store in pool
-struct Data {
-    int d[3];
-};
+using namespace Utils;
 
-TEST_CASE("MemPool basics", "[mempool]") {
-    using namespace Utils;
-    constexpr int N_BLOCKS{ 32 };
+
+class MemPoolBasics : public ::testing::Test {
+protected:
+    // test data structure to store in pool
+    struct Data {
+        int d[3];
+    };
+    static constexpr int N_BLOCKS{ 32 };
     MemPool<double> double_pool{ N_BLOCKS };
     MemPool<Data> data_pool{ N_BLOCKS };
+    void SetUp() override {
 
-    SECTION("empty mempool has maximum free blocks") {
-        REQUIRE(double_pool.get_n_blocks_free() == N_BLOCKS);
     }
+    void TearDown() override {
 
-    SECTION("allocating doubles") {
-        // allocate and accumulate a bunch of double values,
-        // reading them as a test along the way
-        double sum{ 0.0 };
-        for (size_t i{ }; i < N_BLOCKS - 1; ++i) {
-            auto d = double_pool.allocate(double(i));
-            sum += *d;
-        }
-        REQUIRE(sum > 0.0);
-        REQUIRE(double_pool.get_n_blocks_free() == 1);
     }
-
-    SECTION("deallocating doubles") {
-        // allocate and accumulate a bunch of double values,
-        // reading them as a test along the wa
-        double sum{ 0.0 };
-        for (size_t i{ }; i < N_BLOCKS - 1; ++i) {
-            auto d = double_pool.allocate(double(i));
-            sum += *d;
-        }
-        REQUIRE(sum > 0.0);
-        REQUIRE(double_pool.get_n_blocks_free() == 1);
-    }
-
-    // todo: rewrite with GTest ASSERT_DEATH
-//    SECTION("empty mempool fails to allocate space") {
-//        MemPool<uint64_t> pool{ 0 };
-//        auto d = pool.allocate(2);
-//        *d = 2;
-//    }
+};
 
 
+TEST_F(MemPoolBasics, empty_mempool_has_max_free_blocks) {
+    ASSERT_EQ(double_pool.get_n_blocks_free(), N_BLOCKS);
 }
 
+TEST_F(MemPoolBasics, mempool_asserts_before_overrun) {
+    MemPool<uint64_t> pool{ 1 };
+    ASSERT_DEATH(pool.allocate(1), ".*overrun.*");
+}
 
+TEST_F(MemPoolBasics, allocating_doubles) {
+    // allocate and accumulate a bunch of double values,
+    // reading them as a test along the way
+    double sum{ 0.0 };
+    for (size_t i{ }; i < N_BLOCKS - 1; ++i) {
+        auto d = double_pool.allocate(double(i));
+        sum += *d;
+    }
+    ASSERT_TRUE(sum > 0.0);
+    ASSERT_EQ(double_pool.get_n_blocks_free(), 1);
+}
 
+TEST_F(MemPoolBasics, deallocating_doubles) {
+    // allocate and deallocate a bunch of doubles
+    for (size_t i{ }; i < N_BLOCKS - 1; ++i) {
+        auto d = double_pool.allocate(double(i));
+        double_pool.deallocate(d);
+    }
+    ASSERT_EQ(double_pool.get_n_blocks_free(), N_BLOCKS);
+}
+
+TEST_F(MemPoolBasics, allocating_non_primitive_data) {
+    // allocate a non-primitive data structure
+    auto last = data_pool.allocate(Data({ 1, 2, 3 }));
+    for (size_t i{ }; i < N_BLOCKS - 2; ++i) {
+        last = data_pool.allocate(Data({ 1, 2, 3 }));
+    }
+    ASSERT_EQ(last->d[0], 1);
+    ASSERT_EQ(last->d[1], 2);
+    ASSERT_EQ(last->d[2], 3);
+    ASSERT_EQ(data_pool.get_n_blocks_free(), 1);
+}

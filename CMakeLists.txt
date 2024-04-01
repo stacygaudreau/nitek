@@ -23,13 +23,26 @@ add_executable(
 )
 target_link_libraries(nitek_main PUBLIC ${LIBS})
 
-file(GLOB TEST_SOURCES "tests/*.cpp")
 
-# tests target with Catch2
-# https://github.com/catchorg/Catch2/blob/devel/docs/cmake-integration.md#top
-add_subdirectory(${PROJECT_SOURCE_DIR}/lib/Catch2)
+# test target with Gtest
+file(GLOB TEST_SOURCES "tests/*.cpp")
+# FetchContent to load and build googletest
+include(FetchContent)
+FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG main
+)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+# declare and link tests target
+enable_testing()
 add_executable(
         tests
         ${TEST_SOURCES}
 )
-target_link_libraries(tests PRIVATE Catch2::Catch2WithMain PUBLIC ${LIBS})
+target_link_libraries(tests PRIVATE gtest_main PUBLIC ${LIBS})
+
+include(GoogleTest)
+gtest_discover_tests(tests)
