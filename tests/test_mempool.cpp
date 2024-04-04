@@ -17,12 +17,8 @@ protected:
     static constexpr int N_BLOCKS{ 32 };
     MemPool<double> double_pool{ N_BLOCKS };
     MemPool<Data> data_pool{ N_BLOCKS };
-    void SetUp() override {
-
-    }
-    void TearDown() override {
-
-    }
+    void SetUp() override { }
+    void TearDown() override { }
 };
 
 

@@ -6,7 +6,7 @@
 #include <vector>
 
 
-auto threaded_fn(bool sleep) {
+void threaded_fn(bool sleep) {
     if (sleep) {
         using namespace std::literals::chrono_literals;
         std::this_thread::sleep_for(50ms);

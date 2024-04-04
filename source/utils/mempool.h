@@ -21,7 +21,6 @@
 
 namespace Utils
 {
-
 /**
  * @brief A low-latency memory pool for storing dynamically allocated objects on the heap
  * @tparam T Type of object to store in the pool
@@ -37,11 +36,11 @@ public:
      * @param n_blocks (max) number of blocks the pool can store
      */
     explicit MemPool(std::size_t n_blocks) : blocks(n_blocks, { T{ }, true }) {
-        // ensure that the first block in the pool is the correct type
+        // ensure that the first block in the pool is the correct type; we use reinterpret_cast in
+        // .deallocate() - for performance reasons - thus, we ensure cast safety here instead.
         ASSERT(reinterpret_cast<const Block*>(&(blocks[0].object)) == &(blocks[0]),
-               "MemPool::Stored object should be first member of Block");
+               "MemPool::Stored object must be first member of Block");
     }
-
     /**
      * @brief Allocate a new memory block for object of type T
      * @tparam Args Variadic template arguments for T's constructor
@@ -59,7 +58,6 @@ public:
         update_next_free_index();
         return object;
     }
-
     /**
      * @brief Deallocate/free a given object's block from the memory pool
      * @param object Object to deallocate
@@ -127,5 +125,4 @@ private:
     std::vector<Block> blocks;
     size_t i_next_free{ 0 };
 };
-
 }
