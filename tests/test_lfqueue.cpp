@@ -59,7 +59,7 @@ TEST_F(LFQueueBasics, elements_are_read_and_dequeued) {
     ASSERT_EQ(d_read->d[2], 3);
 }
 
-TEST_F(LFQueueBasics, multithreaded_consumption_of_queue) {
+TEST_F(LFQueueBasics, multithreaded_spsc_queue_consumption) {
     // single producer, single consumer threaded use of queue
     // combining threading utils with lfqueue
     EXPECT_EQ(ds.size(), 0);

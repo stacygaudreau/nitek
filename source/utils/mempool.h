@@ -39,7 +39,7 @@ public:
         // ensure that the first block in the pool is the correct type; we use reinterpret_cast in
         // .deallocate() - for performance reasons - thus, we ensure cast safety here instead.
         ASSERT(reinterpret_cast<const Block*>(&(blocks[0].object)) == &(blocks[0]),
-               "MemPool::Stored object must be first member of Block");
+               "<MemPool> stored object must be first member of Block");
     }
     /**
      * @brief Allocate a new memory block for object of type T
@@ -50,7 +50,7 @@ public:
     template<typename ...Args>
     T* allocate(Args... args) noexcept {
         auto block = &(blocks[i_next_free]);
-        ASSERT(block->is_free, "MemPool::object block at index " +
+        ASSERT(block->is_free, "<MemPool> object block at index " +
                 std::to_string(i_next_free) + " is not free");
         T* object = &(block->object);
         object = new(object) T(args...);  // use a specific memory block to allocate via new()
@@ -65,9 +65,9 @@ public:
     auto deallocate(const T* object) noexcept {
         const auto i_object = reinterpret_cast<const Block*>(object) - &blocks[0];
         ASSERT(i_object >= 0 && static_cast<size_t>(i_object) < blocks.size(),
-               "MemPool::object being deallocated does not belong to this pool");
+               "<MemPool> object being deallocated does not belong to this pool");
         ASSERT(!blocks[i_object].is_free,
-               "MemPool::attempting to free a pool object which is NOT in use at index "
+               "<MemPool> attempting to free a pool object which is NOT in use at index "
                        + std::to_string(i_object));
         blocks[i_object].is_free = true;
     }
@@ -112,7 +112,7 @@ private:
             if (i == i_next_free) [[unlikely]] {
                 // there are better methods to handle this in production which are out of the
                 // scope of this exercise.
-                ASSERT(i != i_next_free, "MemPool::memory pool overrun");
+                ASSERT(i != i_next_free, "<MemPool> memory pool overrun");
             }
         }
     }

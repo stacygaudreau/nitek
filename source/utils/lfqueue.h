@@ -66,7 +66,7 @@ public:
      */
     void increment_read_index() noexcept {
         i_read = (i_read + 1) % blocks.size();
-        ASSERT(n_blocks != 0, "LFQueue::read an invalid element in thread with id: "
+        ASSERT(n_blocks != 0, "<LFQueue> read an invalid element in thread with id: "
                 + std::to_string(pthread_self()));
         n_blocks--;
     }
@@ -76,8 +76,6 @@ public:
         return n_blocks.load();
     }
 
-    // delete default, copy/move ctors as well as copy/move assignment op's.
-    // this avoids unintended copy/move construction, as well as copy/move assignment
     LFQueue() = delete;
     LFQueue(const LFQueue&) = delete;
     LFQueue(const LFQueue&&) = delete;

@@ -57,12 +57,14 @@ noexcept {
     auto thread_body = [&] {
         // fail if the thread cannot be pinned to the specified core_id
         if (core_id >= 0 && !pin_thread_to_core(core_id)) {
-            std::cerr << "Failed to set core affinity for " << name << " " << pthread_self() <<
+            std::cerr << "<Threading> failed to set core affinity for " << name << " " <<
+                      pthread_self() <<
                       " to " << core_id << "\n";
             failed = true;
             return;
         }
-        std::cout << "Setting core affinity for " << name << " " << pthread_self() << " to " <<
+        std::cout << "<Threading> Setting core affinity for " << name << " " << pthread_self() <<
+                  " to " <<
                   core_id << "\n";
         running = true;
         // perfect forwarding is used to pass fn's variadic l/rvalues
