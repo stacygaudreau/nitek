@@ -16,7 +16,6 @@ struct Data {
 void consumer_read_data(LFQueue<Data>* ds) {
     using namespace std::literals::chrono_literals;
     std::this_thread::sleep_for(100ms);  // slow down thread; wait for enqueues
-    std::cout << "size: " << ds->size() << "\n";
     while (ds->size() > 5) {
         const auto d = ds->get_next_to_read();
         ds->increment_read_index();
