@@ -147,11 +147,11 @@ struct SocketConfig {
     [[nodiscard]] auto to_str() const {
         std::stringstream ss;
         ss << "SocketConfig: { ip: " << ip
-           << " iface: " << iface
-           << " port: " << port
-           << " is_udp: " << is_udp
-           << " is_listening: " << is_listening
-           << " has_software_timestamp: " << has_software_timestamp << " }\n";
+           << ", iface: " << iface
+           << ", port: " << port
+           << ", is_udp: " << is_udp
+           << ", is_listening: " << is_listening
+           << ", has_software_timestamp: " << has_software_timestamp << " }\n";
         return ss.str();
     }
 };
@@ -162,8 +162,6 @@ struct SocketConfig {
  * @param conf SocketConfig() describing the socket to be created
  * @param logger The Logger() to report log entries to
  * @return File descriptor for the socket if successful, -1 if error
- * @details todo: Update this method to use DEBUG=False optimised ASSERT() when implemented,
- * moving all socket api calls out of asserts.
  */
 [[nodiscard]] inline auto create_socket(const SocketConfig& conf, Logger& logger) -> int {
     // ensure an IP has been provided and if not, fetch it
@@ -192,51 +190,51 @@ struct SocketConfig {
     int fd{ -1 };
     int one{ 1 };
     for (addrinfo* rp = result; rp; rp = rp->ai_next) {
-        ASSERT((fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol)) != -1,
-               "<Sockets> socket() failed! error: "
-                       + std::string(strerror(errno)));
-        ASSERT(set_non_blocking(fd),
-               "<Sockets> set_non_blocking() failed! error: "
-                       + std::string(strerror(errno)));
+        fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        ASSERT(fd != -1, "<Sockets> socket() failed! error: "
+                + std::string(strerror(errno)));
+        status = set_non_blocking(fd);
+        ASSERT(status, "<Sockets> set_non_blocking() failed! error: "
+                + std::string(strerror(errno)));
         if (!conf.is_udp) {
             // TCP sockets have no_delay set to disable nagle's algo
-            ASSERT(set_no_delay(fd),
-                   "<Sockets> set_no_delay() failed! "
-                           + std::string(strerror(errno)));
+            status = set_no_delay(fd);
+            ASSERT(status, "<Sockets> set_no_delay() failed! "
+                    + std::string(strerror(errno)));
         }
         if (!conf.is_listening) {
             // client mode; connect to given IP address
-            ASSERT(connect(fd, rp->ai_addr, rp->ai_addrlen) != 1,
-                   "<Sockets> connect() failed! error: "
-                           + std::string(strerror(errno)));
+            status = connect(fd, rp->ai_addr, rp->ai_addrlen);
+            ASSERT(status != 1, "<Sockets> connect() failed! error: "
+                    + std::string(strerror(errno)));
         }
         else {
             // server mode
             // allow reusing the address, ie: multiple ports/sockets can listen on the same IP for
             //   parallel connections, rebinding and rapid restarts
-            ASSERT(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
-                              reinterpret_cast<const char*>(&one), sizeof(one)) == 0,
-                   "<Sockets> setsockopt(SO_REUSEADDR) failed! error: "
-                           + std::string(strerror(errno)));
+            status = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
+                                reinterpret_cast<const char*>(&one), sizeof(one));
+            ASSERT(status == 0, "<Sockets> setsockopt(SO_REUSEADDR) failed! error: "
+                    + std::string(strerror(errno)));
             // bind/listen on the address and port
             const sockaddr_in addr{ AF_INET, htons(conf.port),
                                     { htonl(INADDR_ANY) }, { }};
-            ASSERT(bind(fd, conf.is_udp ? reinterpret_cast<const struct sockaddr*>(&addr)
-                                        : rp->ai_addr, sizeof(addr)) == 0,
-                   "<Sockets> bind() failed! error: "
-                           + std::string(strerror(errno)));
+            status = bind(fd, conf.is_udp ? reinterpret_cast<const struct sockaddr*>(&addr)
+                                          : rp->ai_addr, sizeof(addr));
+            ASSERT(status == 0, "<Sockets> bind() failed! error: "
+                    + std::string(strerror(errno)));
         }
         if (!conf.is_udp && conf.is_listening) {
             // TCP server mode -> listen for tcp connections
-            ASSERT(listen(fd, MAX_TCP_BACKLOG) == 0,
-                   "<Sockets> listen() failed! error: "
-                           + std::string(strerror(errno)));
+            status = listen(fd, MAX_TCP_BACKLOG);
+            ASSERT(status == 0, "<Sockets> listen() failed! error: "
+                    + std::string(strerror(errno)));
         }
         if (conf.has_software_timestamp) {
             // enable software packet timestamps
-            ASSERT(set_software_timestamps(fd),
-                   "<Sockets> set_software_timestamps() failed! error: "
-                           + std::string(strerror(errno)));
+            status = set_software_timestamps(fd);
+            ASSERT(status, "<Sockets> set_software_timestamps() failed! error: "
+                    + std::string(strerror(errno)));
         }
     }
     freeaddrinfo(result);

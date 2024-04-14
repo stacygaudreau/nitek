@@ -173,11 +173,11 @@ TEST_F(SocketUtils, create_server_socket_succeeds) {
 }
 
 TEST_F(SocketUtils, create_udp_server_socket_succeeds) {
-    // creating a udp server socket
+    // creating a udp server socket with only iface specified
     Logger logger{ logfile };
     SocketConfig conf{ };
     int fd{ -1 };
-    conf.ip = "127.0.0.1";
+    conf.iface = "lo";
     conf.has_software_timestamp = true;
     conf.is_listening = true;
     conf.is_udp = true;
