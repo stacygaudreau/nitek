@@ -1,7 +1,5 @@
 #include "gtest/gtest.h"
-#include <iostream>
 #include <thread>
-#include <numeric>
 #include <vector>
 #include "utils/lfqueue.h"
 #include "utils/threading.h"

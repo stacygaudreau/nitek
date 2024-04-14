@@ -26,7 +26,7 @@ namespace Utils
  * @tparam T Type of object to store in the queue.
  * @details This class is not resizable at runtime, but an alternate version could be made
  * which does indeed resize. Memory is allocated on the heap at runtime, ideally
- * before any critcal paths are entered. An alternate approach which allocates stack memory
+ * before any critical paths are entered. An alternate approach which allocates stack memory
  * could be devised with a std::array instead of vector.
  */
 template<typename T>
