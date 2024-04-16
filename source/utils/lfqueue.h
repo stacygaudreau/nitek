@@ -24,10 +24,10 @@ namespace Utils
 /**
  * @brief A low-latency lock-free queue for SPSC *only*.
  * @tparam T Type of object to store in the queue.
- * @details This class is not resizable at runtime, but an alternate version could be made
- * which does indeed resize. Memory is allocated on the heap at runtime, ideally
- * before any critical paths are entered. An alternate approach which allocates stack memory
- * could be devised with a std::array instead of vector.
+ * @details This class is not resizable at runtime, but an alternate version could
+ * be made which does resize. Memory is allocated on the heap at runtime, ideally
+ * before any critical paths are entered. An alternate approach which allocates
+ * stack memory could be made with a std::array instead of vector.
  */
 template<typename T>
 class LFQueue final {
@@ -37,7 +37,7 @@ public:
      * @param n_blocks Max number of blocks the queue can hold.
      * @details SPSC (only). Single thread writing, single thread reading.
      */
-    LFQueue(size_t n_blocks) : blocks(n_blocks, T{ }) { }
+    explicit LFQueue(size_t n_blocks) : blocks(n_blocks, T{ }) { }
 
     /**
      * @brief Get pointer to the next object to write to
@@ -76,17 +76,13 @@ public:
         return n_blocks.load();
     }
 
-    LFQueue() = delete;
-    LFQueue(const LFQueue&) = delete;
-    LFQueue(const LFQueue&&) = delete;
-    LFQueue& operator=(const LFQueue&) = delete;
-    LFQueue& operator=(const LFQueue&&) = delete;
-
 private:
     std::vector<T> blocks;
     std::atomic<size_t> n_blocks{ 0 };
     std::atomic<size_t> i_write{ 0 };
     std::atomic<size_t> i_read{ 0 };
+
+DELETE_DEFAULT_COPY_AND_MOVE(LFQueue)
 };
 };
 

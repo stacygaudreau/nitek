@@ -28,6 +28,7 @@
 #include <ifaddrs.h>
 #include <sys/socket.h>
 #include <fcntl.h>
+#include <cstring>
 
 #include "logging.h"
 #include "macros.h"
@@ -190,6 +191,10 @@ struct SocketConfig {
     int fd{ -1 };
     int one{ 1 };
     for (addrinfo* rp = result; rp; rp = rp->ai_next) {
+        // todo: fix the potential memory leak from not calling close() on discarded sockets
+        //  if there are >1 matches from getaddrinfo. Cannot however think of any reason why there
+        //  would ever be >1 matches in our use case since we explicitly set protocol, ipv4, port
+        //  and match to a specific IP address
         fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         ASSERT(fd != -1, "<Sockets> socket() failed! error: "
                 + std::string(strerror(errno)));

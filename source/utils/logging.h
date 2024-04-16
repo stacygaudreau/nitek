@@ -27,6 +27,7 @@
 
 namespace Utils
 {
+
 constexpr size_t LOG_QUEUE_SIZE = 8 * 1024 * 1024;
 
 /** @brief The type of data stored in a LogElement */
@@ -73,7 +74,8 @@ public:
         file.open(filename);
         ASSERT(file.is_open(), "<Logger> could not open output logfile "
                 + output_filename);
-        thread = create_and_start_thread(-1, "<Utils::Logger>", [this]() { process_queue(); });
+        thread = create_and_start_thread(
+                -1, "<Utils::Logger>", [this]() { process_queue(); });
         ASSERT(thread != nullptr, "<Logger> failed to start thread");
     }
 
@@ -99,8 +101,9 @@ public:
      */
     void process_queue() noexcept {
         while (is_running) {
-            for (auto next = queue.get_next_to_read(); queue.size() && next; next = queue
-                    .get_next_to_read()) {
+            for (auto next = queue.get_next_to_read();
+                 queue.size() && next;
+                 next = queue.get_next_to_read()) {
                 switch (next->type) {
                 case LogType::CHAR:
                     file << next->value.c;
@@ -141,8 +144,8 @@ public:
     /**
      * @brief Enqueues a LogElement to the next block in the logging queue.
      * @param log_element A LogElement primitive to enqueue.
-     * @details Called by other overloads of push_value() in order to enqueue various
-     * types of data into the logging queue.
+     * @details Called by other overloads of push_value() in order to enqueue
+     * various types of data into the logging queue.
      */
     void push_element(const LogElement& log_element) noexcept {
         *(queue.get_next_to_write()) = log_element;
@@ -153,12 +156,13 @@ public:
      * @brief Enqueue a single char value to the logging queue.
      */
     void push_value(const char value) noexcept {
-        push_element(LogElement{ LogType::CHAR, { .c = value }});
+        push_element(
+                LogElement{ LogType::CHAR, { .c = value }});
     }
     /**
      * @brief Enqueue a collection of char values to the logger's queue.
-     * @details This method can potentially be improved by using memcpy() to copy all chars
-     * in the array instead of iterating.
+     * @details This method can potentially be improved by using memcpy()
+     * to copy all chars in the array instead of iterating.
      */
     void push_value(const char* value) noexcept {
         while (*value) {
@@ -176,49 +180,57 @@ public:
      * @brief Enqueue a single value to the logging queue.
      */
     void push_value(const int value) noexcept {
-        push_element(LogElement{ LogType::INT, { .i = value }});
+        push_element(
+                LogElement{ LogType::INT, { .i = value }});
     }
     /**
      * @brief Enqueue a single value to the logging queue.
      */
     void push_value(const long value) noexcept {
-        push_element(LogElement{ LogType::LONG, { .l = value }});
+        push_element(
+                LogElement{ LogType::LONG, { .l = value }});
     }
     /**
      * @brief Enqueue a single value to the logging queue.
      */
     void push_value(const long long value) noexcept {
-        push_element(LogElement{ LogType::LONG_LONG, { .ll = value }});
+        push_element(
+                LogElement{ LogType::LONG_LONG, { .ll = value }});
     }
     /**
      * @brief Enqueue a single value to the logging queue.
      */
     void push_value(const unsigned value) noexcept {
-        push_element(LogElement{ LogType::U_INT, { .u = value }});
+        push_element(
+                LogElement{ LogType::U_INT, { .u = value }});
     }
     /**
      * @brief Enqueue a single value to the logging queue.
      */
     void push_value(const unsigned long value) noexcept {
-        push_element(LogElement{ LogType::U_LONG, { .ul = value }});
+        push_element(
+                LogElement{ LogType::U_LONG, { .ul = value }});
     }
     /**
      * @brief Enqueue a single value to the logging queue.
      */
     void push_value(const unsigned long long value) noexcept {
-        push_element(LogElement{ LogType::U_LONG_LONG, { .ull = value }});
+        push_element(
+                LogElement{ LogType::U_LONG_LONG, { .ull = value }});
     }
     /**
      * @brief Enqueue a single value to the logging queue.
      */
     void push_value(const float value) noexcept {
-        push_element(LogElement{ LogType::FLOAT, { .f = value }});
+        push_element(
+                LogElement{ LogType::FLOAT, { .f = value }});
     }
     /**
      * @brief Enqueue a single value to the logging queue.
      */
     void push_value(double value) noexcept {
-        push_element(LogElement{ LogType::DOUBLE, { .d = value }});
+        push_element(
+                LogElement{ LogType::DOUBLE, { .d = value }});
     }
 
     /**
@@ -250,8 +262,9 @@ public:
      * @param s Logging message/string with % to replace by any arguments which follow.
      */
     void logf(const char* s) noexcept {
-        // base case to handle when there are no arguments specified and it's just a textual
-        //  log message. We do not use template specialisation here since it will not inline in GCC
+        // base case to handle when there are no arguments specified and it's
+        // just a textual log message. We do not use template specialisation here
+        // since it will not inline in GCC
         while (*s) {
             if (*s == '%') {
                 if (*(s + 1) == '%') [[unlikely]] { // allow %% to escape %
@@ -265,18 +278,14 @@ public:
         }
     }
 
-    Logger() = delete;
-    Logger(const Logger&) = delete;
-    Logger(const Logger&&) = delete;
-    Logger& operator=(const Logger&) = delete;
-    Logger& operator=(const Logger&&) = delete;
-
 private:
     const std::string filename; // log output file name
-    std::ofstream file; // log output file stream 
+    std::ofstream file; // log output file stream
     LFQueue<LogElement> queue;  // log events pending write to file
     std::atomic<bool> is_running{ true };  // for stopping the process
     std::unique_ptr<std::thread> thread{ nullptr }; // dedicated logging thread
+
+DELETE_DEFAULT_COPY_AND_MOVE(Logger)
 };
 
 }

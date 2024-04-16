@@ -29,3 +29,16 @@ inline auto FATAL(const std::string& msg) noexcept {
     std::cerr << msg << "\n";
     exit(EXIT_FAILURE);
 }
+
+/**
+ * @brief Delete default ctor and copy/move ctor and assignment
+ * operators for a given classname
+ */
+#define DELETE_DEFAULT_COPY_AND_MOVE(ClassName) \
+public: \
+    ClassName() = delete; \
+    ClassName(const ClassName&) = delete; \
+    ClassName(const ClassName&&) = delete; \
+    ClassName& operator=(const ClassName&) = delete; \
+    ClassName& operator=(const ClassName&&) = delete;
+
