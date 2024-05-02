@@ -10,7 +10,7 @@ auto TCPSocket::connect(const std::string& ip, const std::string& iface, int por
     const SocketConfig conf{
             ip, iface, port, false, is_listening, true };
     fd = create_socket(conf, logger);
-    // set attributes and return descriptor
+    // set connection attributes and return descriptor
     in_inaddr.sin_addr.s_addr = INADDR_ANY;
     in_inaddr.sin_port = htons(port);
     in_inaddr.sin_family = AF_INET;
@@ -55,7 +55,7 @@ auto TCPSocket::tx_and_rx() noexcept -> bool {
     if (i_tx_next > 0) {
         const auto n = send(fd, tx_buffer.data(),
                             i_tx_next, MSG_DONTWAIT | MSG_NOSIGNAL);
-        logger.logf("% <TCPSocket::%> TX at socket %, len: %, size: %\n",
+        logger.logf("% <TCPSocket::%> TX at socket %, size: %\n",
                     Utils::get_time_str(&t_str), __FUNCTION__, fd, n);
     }
     i_tx_next = 0;

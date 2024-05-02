@@ -15,6 +15,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 
 inline auto ASSERT(bool cond, const std::string& msg) noexcept {
@@ -28,6 +29,15 @@ inline auto ASSERT(bool cond, const std::string& msg) noexcept {
 inline auto FATAL(const std::string& msg) noexcept {
     std::cerr << msg << "\n";
     exit(EXIT_FAILURE);
+}
+
+/**
+ * @brief Check if an element does not exist in a vector
+ * @return True when the element is not in the vector
+ */
+template<typename T>
+inline bool element_does_not_exist(std::vector<T>& v, T element) {
+    return std::find(v.begin(), v.end(), element) == v.end();
 }
 
 /**

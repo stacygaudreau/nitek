@@ -69,6 +69,17 @@ TEST_F(SocketUtils, set_non_blocking_socket) {
     EXPECT_TRUE(flags & O_NONBLOCK);    // blocking should be active now
 }
 
+TEST_F(SocketUtils, set_blocking_socket) {
+    // test socket can toggle its blocking flag back on
+    auto flags = fcntl(socket_fd, F_GETFL, 0);
+    ASSERT_TRUE(set_non_blocking(socket_fd)); // function call succeeds
+    flags = fcntl(socket_fd, F_GETFL, 0);
+    ASSERT_TRUE(flags & O_NONBLOCK);    // blocking should be active now
+    EXPECT_TRUE(set_blocking(socket_fd));
+    flags = fcntl(socket_fd, F_GETFL, 0);
+    EXPECT_FALSE(flags & O_NONBLOCK);   // blocking is disabled now
+}
+
 TEST_F(SocketUtils, set_no_tcp_send_delay) {
     int optval{ }; // result of reading socket options
     socklen_t optlen = sizeof(optval);
@@ -167,6 +178,12 @@ TEST_F(SocketUtils, create_server_socket_succeeds) {
     conf.port = 0;
     fd = create_socket(conf, logger);
     EXPECT_NE(fd, -1);  // test for valid file descriptor
+    // verify that address reuse option is set
+    int optval{ }; // result of reading socket options
+    socklen_t optlen = sizeof(optval);
+    getsockopt(fd, SOL_SOCKET,
+               SO_REUSEADDR, (void*) &optval, &optlen);
+    EXPECT_EQ(optval, 1);
     // close the socket
     if (fd != -1)
         close(fd);

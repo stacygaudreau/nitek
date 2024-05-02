@@ -72,6 +72,17 @@ inline auto set_non_blocking(int fd) -> bool {
     return (fcntl(fd, F_SETFL, flags | O_NONBLOCK) != -1);  // set flag to non-blocking
 }
 /**
+ * @brief Enable blocking on the socket
+ * @param fd Socket file descriptor
+ * @return True when successful
+ */
+inline auto set_blocking(int fd) -> bool {
+    const auto flags = fcntl(fd, F_GETFL, 0);   // get flags for fd
+    if (!(flags & O_NONBLOCK))
+        return true;    // already blocking
+    return (fcntl(fd, F_SETFL, flags & !O_NONBLOCK) != -1);  // set flag to non-blocking
+}
+/**
  * @brief Disable Nagle's Algorithm on the socket, improving latency by reducing
  * sent TCP packet delay
  * @param fd Socket file descriptor
@@ -219,14 +230,14 @@ struct SocketConfig {
             //   parallel connections, rebinding and rapid restarts
             status = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
                                 reinterpret_cast<const char*>(&one), sizeof(one));
-            ASSERT(status == 0, "<Sockets> setsockopt(SO_REUSEADDR) failed! error: "
+            ASSERT(status != -1, "<Sockets> setsockopt(SO_REUSEADDR) failed! error: "
                     + std::string(strerror(errno)));
             // bind/listen on the address and port
             const sockaddr_in addr{ AF_INET, htons(conf.port),
                                     { htonl(INADDR_ANY) }, { }};
             status = bind(fd, conf.is_udp ? reinterpret_cast<const struct sockaddr*>(&addr)
                                           : rp->ai_addr, sizeof(addr));
-            ASSERT(status == 0, "<Sockets> bind() failed! error: "
+            ASSERT(status >= 0, "<Sockets> bind() failed! error: "
                     + std::string(strerror(errno)));
         }
         if (!conf.is_udp && conf.is_listening) {

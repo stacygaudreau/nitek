@@ -9,6 +9,7 @@
  *
  */
 
+#include <utility>
 #include <vector>
 #include <sys/epoll.h>
 
@@ -39,16 +40,46 @@ public:
      * @param port Port number
      */
     void listen(const std::string& iface, int port);
+    /**
+     * @brief Poll for new or dead connections, updating socket tracking containers
+     */
+    void poll() noexcept;
+    /**
+     * @brief Send and receive data from all tx and rx socket buffers
+     */
+    void tx_and_rx() noexcept;
+    /**
+     * @brief Set the function to be called when data is available to read from
+     * the rx_buffer
+     */
+    inline void set_rx_callback(
+            std::function<void(TCPSocket* s, Nanos t_rx)> fn) noexcept {
+        rx_callback = std::move(fn);
+    };
+    /**
+     * @brief Set the function to be called when all rx_sockets have completed
+     * their read cycles
+     */
+    inline void set_rx_done_callback(std::function<void()> fn) noexcept {
+        rx_done_callback = fn;
+    }
+
+    inline TCPSocket& get_socket() noexcept { return listener_socket; };
+    inline int get_fd_epoll() noexcept { return fd_epoll; };
+    inline auto& get_rx_sockets() noexcept { return rx_sockets; };
+    inline auto& get_tx_sockets() noexcept { return tx_sockets; };
+    inline auto& get_dx_sockets() noexcept { return dx_sockets; };
 
 private:
     int fd_epoll{ -1 };                 // file descriptor for EPOLL
     TCPSocket listener_socket;          // listener for new incoming connections
     epoll_event events[1024];           // for monitoring the listener fd
-    std::vector<TCPSocket*> sockets;    // all sockets
     std::vector<TCPSocket*> rx_sockets; // receiving sockets
     std::vector<TCPSocket*> tx_sockets; // transmission sockets
     std::vector<TCPSocket*> dx_sockets; // disconnected sockets
+    // rx data available callback
     std::function<void(TCPSocket* s, Nanos t_rx)> rx_callback;
+    // callback when all rx sockets have completed read cycle
     std::function<void()> rx_done_callback;
     std::string t_str;
     Logger& logger;
@@ -71,7 +102,7 @@ private:
     * @brief Default rx complete callback simply logs a message on receipt
     */
     void default_rx_done_callback() noexcept {
-        logger.logf("% <TCPServer::%> socket: %, len: %, rx: %\n",
+        logger.logf("% <TCPServer::%> server rx done\n",
                     Utils::get_time_str(&t_str), __FUNCTION__);
     }
 };

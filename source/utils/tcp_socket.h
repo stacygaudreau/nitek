@@ -71,13 +71,14 @@ public:
     std::vector<char> rx_buffer{ };
     size_t i_rx_next{ };
 
+    std::function<void(TCPSocket* s, Nanos t_rx)> rx_callback;
+
 private:
     bool tx_connected{ true };
     bool rx_connected{ true };
 
     struct sockaddr_in in_inaddr{ };
     // callback fn when new data is received and available for consumption
-    std::function<void(TCPSocket* s, Nanos t_rx)> rx_callback;
     Logger& logger;
     std::string t_str;
 
