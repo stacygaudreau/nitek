@@ -44,7 +44,7 @@ public:
      * @param ip IP address to connect to
      * @param iface Interface to connect to
      * @param port Port to connect to
-     * @param is_listening
+     * @param is_listening Binds the socket to port for incoming connections when true
      * @return The file descriptor (fd) integer if successful, else -1
      */
     auto connect(const std::string& ip, const std::string& iface,
@@ -52,11 +52,12 @@ public:
     /**
      * @brief Call to load data into the send (tx) buffer for transmission
      * @param data Data to be sent
-     * @param len Length of data being given
+     * @param len Length of given data
      */
     void load_tx(const void* data, size_t len) noexcept;
     /**
      * @brief Publish tx and rx data to buffers, dispatching an rx_callback if needed
+     * @return True when data is ready to read in rx_buffer
      */
     auto tx_and_rx() noexcept -> bool;
 

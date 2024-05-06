@@ -119,6 +119,17 @@ TEST_F(SocketUtils, detects_blocking_operation) {
     EXPECT_TRUE(get_would_block());
 }
 
+TEST_F(SocketUtils, multicast_group_join) {
+    // multicast group membership added to socket options
+    // multicast group address
+    const std::string mcast_ip{ "239.0.0.1" };
+    // fn call succeeds
+    EXPECT_TRUE(mcast_group_join(socket_fd_udp, mcast_ip));
+    // getsockopt() does not retrieve the multicast groups joined
+    // so we just expect the fn call to succeed above
+    // -> maybe there is a different way to verify it (to-do)
+}
+
 TEST_F(SocketUtils, ttl_is_set) {
     int optval{ }; // result of reading socket options
     socklen_t optlen = sizeof(optval);

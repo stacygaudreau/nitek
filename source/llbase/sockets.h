@@ -132,12 +132,12 @@ inline auto set_ttl_multicast(int fd, int ttl) -> bool {
                        reinterpret_cast<void*>(&ttl), sizeof(ttl)) != -1);
 }
 /**
- * @brief Add join membership/subscription to the given multicast stream on the IP/iface specified
+ * @brief Join a given multicast stream group on the given socket and ip
  * @param fd Socket file descriptor
  * @param ip String rep'n of iface's IP address
  * @return True when successful
  */
-inline auto join(int fd, const std::string& ip) -> bool {
+inline auto mcast_group_join(int fd, const std::string& ip) -> bool {
     const ip_mreq mreq{{ inet_addr(ip.c_str()) },
                        { htonl(INADDR_ANY) }};
     return (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP,

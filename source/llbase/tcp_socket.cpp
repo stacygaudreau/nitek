@@ -21,6 +21,8 @@ void TCPSocket::load_tx(const void* data, size_t len) noexcept {
     // we simply copy the given data into the buffer and advance its index
     memcpy(tx_buffer.data() + i_tx_next, data, len);
     i_tx_next += len;
+    ASSERT(i_tx_next < TCP_BUFFER_SIZE,
+           "<TCPSocket> tx buffer overflow! Have you called tx_and_rx()?");
 }
 
 auto TCPSocket::tx_and_rx() noexcept -> bool {
