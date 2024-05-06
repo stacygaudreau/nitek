@@ -1,7 +1,7 @@
 #include "tcp_server.h"
 
 
-namespace Utils
+namespace LL
 {
 
 void TCPServer::listen(const std::string& iface, int port) {
@@ -44,7 +44,7 @@ void TCPServer::poll() noexcept {
                 // data received on primary listener socket (ie: the TCPServer's socket)
                 //  so, we have a new incoming connection socket to add
                 logger.logf("% <TCPServer::%> EPOLLIN at listener_socket fd: %\n",
-                            Utils::get_time_str(&t_str), __FUNCTION__,
+                            LL::get_time_str(&t_str), __FUNCTION__,
                             socket->fd);
                 has_new_connection = true;
                 continue;
@@ -52,7 +52,7 @@ void TCPServer::poll() noexcept {
             // received on different socket; add to rx_sockets if it isn't
             //  already there
             logger.logf("% <TCPServer::%> EPOLLIN at socket fd: %\n",
-                        Utils::get_time_str(&t_str), __FUNCTION__,
+                        LL::get_time_str(&t_str), __FUNCTION__,
                         socket->fd);
             if (element_does_not_exist(rx_sockets, socket))
                 rx_sockets.push_back(socket);
@@ -61,7 +61,7 @@ void TCPServer::poll() noexcept {
         if (e.events & EPOLLOUT) {
             // add to tx_sockets if it's not already there
             logger.logf("% <TCPServer::%> EPOLLOUT at socket fd: %\n",
-                        Utils::get_time_str(&t_str), __FUNCTION__,
+                        LL::get_time_str(&t_str), __FUNCTION__,
                         socket->fd);
             if (element_does_not_exist(tx_sockets, socket)) {
                 tx_sockets.push_back(socket);
@@ -71,7 +71,7 @@ void TCPServer::poll() noexcept {
         //  (error or signal hang up) -> add to dx_sockets
         if (e.events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
             logger.logf("% <TCPServer::%> EPOLLERR|HUP at socket fd: %\n",
-                        Utils::get_time_str(&t_str), __FUNCTION__,
+                        LL::get_time_str(&t_str), __FUNCTION__,
                         socket->fd);
             if (element_does_not_exist(dx_sockets, socket))
                 dx_sockets.push_back(socket);
@@ -81,7 +81,7 @@ void TCPServer::poll() noexcept {
     // accept new connections if any were found
     while (has_new_connection) {
         logger.logf("% <TCPServer::%> has_new_connection\n",
-                    Utils::get_time_str(&t_str), __FUNCTION__);
+                    LL::get_time_str(&t_str), __FUNCTION__);
         sockaddr_storage addr{ };
         socklen_t addr_len = sizeof(addr);
         int fd = accept(listener_socket.fd, reinterpret_cast<sockaddr*>(&addr),
@@ -97,7 +97,7 @@ void TCPServer::poll() noexcept {
                "<TCPServer> error! failed to set no delay mode on socket fd: "
                        + std::to_string(fd));
         logger.logf("% <TCPServer::%> accepted new socket fd: %\n",
-                    Utils::get_time_str(&t_str), __FUNCTION__,
+                    LL::get_time_str(&t_str), __FUNCTION__,
                     fd);
         // create TCPSocket and add it to containers
         auto socket = new TCPSocket(logger);

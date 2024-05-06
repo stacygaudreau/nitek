@@ -18,7 +18,7 @@
 
 #pragma once
 
-namespace Utils
+namespace LL
 {
 
 class TCPServer {
@@ -95,7 +95,7 @@ private:
      */
     void default_rx_callback(TCPSocket* socket, Nanos t_rx) noexcept {
         logger.logf("% <TCPServer::%> socket: %, len: %, rx: %\n",
-                    Utils::get_time_str(&t_str), __FUNCTION__,
+                    LL::get_time_str(&t_str), __FUNCTION__,
                     socket->fd, socket->i_rx_next, t_rx);
     }
     /**
@@ -103,7 +103,7 @@ private:
     */
     void default_rx_done_callback() noexcept {
         logger.logf("% <TCPServer::%> server rx done\n",
-                    Utils::get_time_str(&t_str), __FUNCTION__);
+                    LL::get_time_str(&t_str), __FUNCTION__);
     }
 };
 

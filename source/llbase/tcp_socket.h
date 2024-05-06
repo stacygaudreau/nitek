@@ -19,7 +19,7 @@
 #include "logging.h"
 
 
-namespace Utils
+namespace LL
 {
 constexpr size_t TCP_BUFFER_SIZE{ 64 * 1024 * 1024 };
 
@@ -87,7 +87,7 @@ private:
      */
     void default_rx_callback(TCPSocket* socket, Nanos t_rx) noexcept {
         logger.logf("% <TCPSocket::%> socket: %, len: %, rx: %\n",
-                    Utils::get_time_str(&t_str), __FUNCTION__,
+                    LL::get_time_str(&t_str), __FUNCTION__,
                     socket->fd, socket->i_rx_next, t_rx);
     }
 

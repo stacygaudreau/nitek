@@ -19,7 +19,7 @@
 #include "macros.h"
 
 
-namespace Utils
+namespace LL
 {
 /**
  * @brief A low-latency lock-free queue for SPSC *only*.

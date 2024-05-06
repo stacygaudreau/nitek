@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "utils/threading.h"
+#include "llbase/threading.h"
 #include <iostream>
 #include <thread>
 #include <numeric>
@@ -17,7 +17,7 @@ void partial_sum(const std::vector<int>& numbers, int start, int end, int* sum) 
     *sum = std::accumulate(numbers.begin() + start, numbers.begin() + end, 0);
 }
 
-using namespace Utils;
+using namespace LL;
 
 
 class ThreadingBasics : public ::testing::Test {

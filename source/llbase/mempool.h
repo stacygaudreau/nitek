@@ -20,7 +20,7 @@
 #include "macros.h"
 
 
-namespace Utils
+namespace LL
 {
 /**
  * @brief A low-latency memory pool for storing dynamically allocated objects on the heap

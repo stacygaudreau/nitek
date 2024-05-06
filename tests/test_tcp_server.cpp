@@ -1,13 +1,13 @@
 #include "gtest/gtest.h"
-#include "utils/tcp_socket.h"
-#include "utils/tcp_server.h"
-#include "utils/sockets.h"
+#include "llbase/tcp_socket.h"
+#include "llbase/tcp_server.h"
+#include "llbase/sockets.h"
 
 #include <string>
 #include <iostream>
 
 
-using namespace Utils;
+using namespace LL;
 
 
 // base tests for TCPServer module

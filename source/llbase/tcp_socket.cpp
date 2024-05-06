@@ -1,7 +1,7 @@
 #include "tcp_socket.h"
 
 
-namespace Utils
+namespace LL
 {
 
 auto TCPSocket::connect(const std::string& ip, const std::string& iface, int port,
@@ -46,7 +46,7 @@ auto TCPSocket::tx_and_rx() noexcept -> bool {
         }
         const auto t_user = get_time_nanos();
         logger.logf("% <TCPSocket::%> RX at socket %, len: %, t_user: %, t_kernel: %, delta: %\n",
-                    Utils::get_time_str(&t_str), __FUNCTION__, fd, i_rx_next,
+                    LL::get_time_str(&t_str), __FUNCTION__, fd, i_rx_next,
                     t_user, t_kernel, (t_user - t_kernel));
         rx_callback(this, t_kernel);
     }
@@ -56,7 +56,7 @@ auto TCPSocket::tx_and_rx() noexcept -> bool {
         const auto n = send(fd, tx_buffer.data(),
                             i_tx_next, MSG_DONTWAIT | MSG_NOSIGNAL);
         logger.logf("% <TCPSocket::%> TX at socket %, size: %\n",
-                    Utils::get_time_str(&t_str), __FUNCTION__, fd, n);
+                    LL::get_time_str(&t_str), __FUNCTION__, fd, n);
     }
     i_tx_next = 0;
     return (rx_size > 0);

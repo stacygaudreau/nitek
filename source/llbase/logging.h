@@ -25,7 +25,7 @@
 #include "timekeeping.h"
 
 
-namespace Utils
+namespace LL
 {
 
 constexpr size_t LOG_QUEUE_SIZE = 8 * 1024 * 1024;
@@ -75,7 +75,7 @@ public:
         ASSERT(file.is_open(), "<Logger> could not open output logfile "
                 + output_filename);
         thread = create_and_start_thread(
-                -1, "<Utils::Logger>", [this]() { process_queue(); });
+                -1, "<LL::Logger>", [this]() { process_queue(); });
         ASSERT(thread != nullptr, "<Logger> failed to start thread");
     }
 

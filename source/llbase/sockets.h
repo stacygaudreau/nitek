@@ -34,7 +34,7 @@
 #include "macros.h"
 
 
-namespace Utils
+namespace LL
 {
 
 constexpr int MAX_TCP_BACKLOG{ 1024 };  // (server) max tcp connections pending/unaccepted
@@ -180,7 +180,7 @@ struct SocketConfig {
     std::string t_str;
     int status{ };  // stores temp. return status of fn calls
     const auto ip = conf.ip.empty() ? get_iface_ip(conf.iface) : conf.ip;
-    logger.logf("% <Sockets::%> %", Utils::get_time_str(&t_str),
+    logger.logf("% <Sockets::%> %", LL::get_time_str(&t_str),
                 __FUNCTION__, conf.to_str());
 
     // prepare socket address struct for bind/listen

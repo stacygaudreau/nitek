@@ -7,10 +7,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "-std=c++2a -Wall -Wextra -Werror -Wpedantic")
 set(CMAKE_VERBOSE_MAKEFILE on)
 
-add_subdirectory(source/utils)
+add_subdirectory(source/llbase)
 add_subdirectory(source/nitek)
 
-list(APPEND LIBS utils)
+list(APPEND LIBS llbase)
 list(APPEND LIBS nitek)
 
 include_directories(${PROJECT_SOURCE_DIR}/source)

@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
-#include "utils/sockets.h"
-#include "utils/logging.h"
+#include "llbase/sockets.h"
+#include "llbase/logging.h"
 
 #include <string>
 #include <iostream>
@@ -12,7 +12,7 @@
 #include <cerrno>
 
 
-using namespace Utils;
+using namespace LL;
 
 
 class SocketUtils : public ::testing::Test {

@@ -1,11 +1,11 @@
 #include "gtest/gtest.h"
 #include <thread>
 #include <vector>
-#include "utils/lfqueue.h"
-#include "utils/threading.h"
+#include "llbase/lfqueue.h"
+#include "llbase/threading.h"
 
 
-using namespace Utils;
+using namespace LL;
 
 struct Data {
     int d[3];
