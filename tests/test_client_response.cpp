@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "exchange/networking/client_response.h"
+#include "nitek/exchange/data/ome_client_response.h"
 
 #include <string>
 #include <vector>

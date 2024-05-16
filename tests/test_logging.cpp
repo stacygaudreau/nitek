@@ -53,7 +53,7 @@ protected:
 };
 
 
-TEST_F(LoggingBasics, is_instantiated) {
+TEST_F(LoggingBasics, is_constructed) {
     // a logger is constructed without err and the logfile exists on disk
     Logger logger{ filename };
     ASSERT_TRUE(&logger);

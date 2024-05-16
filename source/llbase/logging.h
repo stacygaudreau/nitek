@@ -28,7 +28,7 @@
 namespace LL
 {
 
-constexpr size_t LOG_QUEUE_SIZE = 8 * 1024 * 1024;
+constexpr size_t QUEUE_SIZE = 8 * 1024 * 1024;
 
 /** @brief The type of data stored in a LogElement */
 enum class LogType : int8_t {
@@ -67,10 +67,11 @@ struct LogElement {
 
 class Logger final {
 public:
+    static constexpr size_t QUEUE_SIZE{ 8 * 1024 * 1024 };
 
     explicit Logger(const std::string& output_filename)
             : filename(output_filename),
-              queue(LOG_QUEUE_SIZE) {
+              queue(QUEUE_SIZE) {
         file.open(filename);
         ASSERT(file.is_open(), "<Logger> could not open output logfile "
                 + output_filename);

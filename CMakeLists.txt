@@ -17,9 +17,10 @@ include_directories(${PROJECT_SOURCE_DIR}/source)
 include_directories(${PROJECT_SOURCE_DIR}/source/nitek)
 
 # nitek main target
+file(GLOB NITEK_SOURCES "source/nitek/*.cpp")
 add_executable(
         nitek_main
-        source/nitek/nitek_main.cpp
+        ${NITEK_SOURCES}
 )
 target_link_libraries(nitek_main PUBLIC ${LIBS})
 
