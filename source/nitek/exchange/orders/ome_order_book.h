@@ -38,6 +38,11 @@ public:
      * @param ome Parent Order Matching Engine instance the book belongs to
      */
     explicit OMEOrderBook(TickerID ticker, LL::Logger& logger, OrderMatchingEngine& ome);
+    ~OMEOrderBook();
+
+    void add(ClientID client, OrderID client_order, TickerID ticker, Side side, Price price,
+             Qty qty) noexcept;
+    void cancel(ClientID client, OrderID order, TickerID ticker) noexcept;
 
 private:
     TickerID ticker{ TickerID_INVALID };    // instrument this orderbook is for

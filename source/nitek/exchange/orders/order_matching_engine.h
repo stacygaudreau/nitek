@@ -58,6 +58,16 @@ public:
      */
     void process_client_request(const OMEClientRequest* request) noexcept;
     /**
+     * @brief Dispatch a given response to a client to the order
+     * gateway server.
+     */
+    void send_client_response(const OMEClientResponse* response) noexcept;
+    /**
+     * @brief Dispatch a given market update to the market data
+     * publisher.
+     */
+    void send_market_update(const OMEMarketUpdate* update) noexcept;
+    /**
      * @brief Run the main matching engine loop. Processes client
      * requests received from the rx_requests queue.
      */

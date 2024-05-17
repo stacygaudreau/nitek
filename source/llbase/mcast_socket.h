@@ -28,8 +28,7 @@ constexpr size_t MCAST_BUFFER_SIZE{ 64 * 1024 * 1024 };
 class McastSocket {
 public:
     /**
-     * @brief
-     * @param logger
+     * @brief UDP Multicast socket
      */
     explicit McastSocket(Logger& logger) : logger(logger) {
         tx_buffer.resize(MCAST_BUFFER_SIZE);
