@@ -28,8 +28,6 @@
 namespace LL
 {
 
-constexpr size_t QUEUE_SIZE = 8 * 1024 * 1024;
-
 /** @brief The type of data stored in a LogElement */
 enum class LogType : int8_t {
     CHAR,
@@ -91,7 +89,8 @@ public:
         }
         // clean up after all logging events in the queue have been processed
         is_running = false;
-        thread->join();
+        if (thread != nullptr && thread->joinable())
+            thread->join();
         file.close();
         std::cerr << get_time_str(&time_str) << " <Logger> exiting logger for logfile "
                   << filename << std::endl;

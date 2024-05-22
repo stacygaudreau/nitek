@@ -75,10 +75,7 @@ public:
     std::function<void(TCPSocket* s, Nanos t_rx)> rx_callback;
 
 private:
-    bool tx_connected{ true };
-    bool rx_connected{ true };
-
-    struct sockaddr_in in_inaddr{ };
+    sockaddr_in in_inaddr{ };
     // callback fn when new data is received and available for consumption
     Logger& logger;
     std::string t_str;

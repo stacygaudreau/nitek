@@ -19,6 +19,11 @@
 #include <string>
 
 
+// comment this out for release build
+#ifndef IS_TEST_SUITE
+#define IS_TEST_SUITE
+#endif
+
 namespace Exchange
 {
 /**
@@ -28,13 +33,21 @@ namespace OME
 {
 /*
  * Exchange system limits - can be modified and tuned
+ * NB: we use different (smaller) limits for the test suite since
+ * it takes a non-trivial amount of time to allocate/deallocate
+ * for each unit test otherwise
  */
+#ifdef IS_TEST_SUITE
+constexpr size_t OME_SIZE{ 16 };
+#else
+constexpr size_t OME_SIZE{ 256 };
+#endif
 constexpr size_t MAX_TICKERS{ 8 };                  // trading instruments supported
-constexpr size_t MAX_CLIENT_UPDATES{ 256 * 1024 };  // matching requests & res. queued
-constexpr size_t MAX_MARKET_UPDATES{ 256 * 1024 };  // market updates queued to publish
-constexpr size_t MAX_N_CLIENTS{ 256 };              // market participants
+constexpr size_t MAX_CLIENT_UPDATES{ OME_SIZE * 1024 };  // matching requests & res. queued
+constexpr size_t MAX_MARKET_UPDATES{ OME_SIZE * 1024 };  // market updates queued to publish
+constexpr size_t MAX_N_CLIENTS{ OME_SIZE };              // market participants
 constexpr size_t MAX_ORDER_IDS{ 1024 * 1024 };      // orders for a single trading instrument
-constexpr size_t MAX_PRICE_LEVELS{ 256 };           // depth of price levels in the order book
+constexpr size_t MAX_PRICE_LEVELS{ OME_SIZE };           // depth of price levels in the order book
 }
 
 /**
