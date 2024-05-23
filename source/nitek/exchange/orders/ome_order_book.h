@@ -39,7 +39,7 @@ public:
      * @param logger Logging instance to write to
      * @param ome Parent Order Matching Engine instance the book belongs to
      */
-    explicit OMEOrderBook(TickerID ticker, LL::Logger& logger, OrderMatchingEngine& ome);
+    explicit OMEOrderBook(TickerID assigned_ticker, LL::Logger& logger, OrderMatchingEngine& ome);
     ~OMEOrderBook();
 
     /**
@@ -54,9 +54,13 @@ public:
      * @param price Price of the order
      * @param qty Quantity requested
      */
-    void add(ClientID client, OrderID client_order, TickerID ticker, Side side, Price price,
+    void add(ClientID client_id, OrderID client_oid, TickerID ticker_id, Side side, Price price,
              Qty qty) noexcept;
-    void cancel(ClientID client, OrderID order, TickerID ticker) noexcept;
+    /**
+     * @brief Cancel an existing order in the book, if it can
+     * be cancelled.
+     */
+    void cancel(ClientID client_id, OrderID order_id, TickerID ticker_id) noexcept;
 
     /**
      * @brief Return a string rep'n of the order book contents
@@ -71,7 +75,7 @@ public:
     }
 
 private:
-    TickerID ticker{ TickerID_INVALID };    // instrument this orderbook is for
+    TickerID assigned_ticker{ TickerID_INVALID };    // instrument this orderbook is for
     LL::Logger& logger; // logging instance to write to
     OrderMatchingEngine& ome;   // matching engine which owns this book
 
@@ -93,6 +97,16 @@ private:
     std::string t_str;
 
     /**
+     * @brief Find a partial or complete match for the given order.
+     * @return Zero when fully matched, else the remaining quantity
+     * in the order after matching. If there is no match, the
+     * original full order qty is returned.
+     */
+    Qty find_match(ClientID client_id, OrderID client_order_id,
+                   TickerID ticker_id, Side side, Price price,
+                   Qty qty, OrderID new_market_order_id) noexcept;
+
+    /**
      * @brief Get a new market OrderID in the sequence.
      */
     inline OrderID get_new_market_order_id() noexcept {
@@ -111,6 +125,34 @@ private:
     inline OMEOrdersAtPrice* get_orders_at_price(Price price) const noexcept {
         return map_price_to_orders_at_price.at(price_to_index(price));
     }
+    /**
+     * @brief Add new orders at a given price level to the order book
+     */
+    void add_orders_at_price(OMEOrdersAtPrice* new_orders_at_price) noexcept;
+    /**
+     * @brief Remove orders at a given price level and side from
+     * the order book
+     */
+    void remove_orders_at_price(Side side, Price price) noexcept;
+    /**
+     * @brief Get the next priority in a given price level
+     */
+    inline Priority get_next_priority(Price price) noexcept {
+        // return 1 if a priority is not yet there, else
+        //  we simply return the next priority level (+1)
+        const auto orders_at_price = get_orders_at_price(price);
+        if (!orders_at_price)
+            return 1ul;
+        return orders_at_price->order_0->prev->priority + 1ul;
+    }
+    /**
+     * @brief Adds a given order to the limit order book
+     */
+    inline void add_order_to_book(OMEOrder* order) noexcept;
+    /**
+     * @brief Removes a given order from the limit order book
+     */
+    inline void remove_order_from_book(OMEOrder* order) noexcept;
 
 DELETE_DEFAULT_COPY_AND_MOVE(OMEOrderBook)
 };
