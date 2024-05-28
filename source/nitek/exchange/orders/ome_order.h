@@ -53,6 +53,8 @@ public:
     OMEOrder* prev{ nullptr };  // prev. order at price level
     OMEOrder* next{ nullptr };  // next order at price level
 
+    bool operator==(OMEOrder const&) const = default;
+
     std::string to_str() const {
         std::stringstream ss;
         ss << "<OMEOrder>" << "["
@@ -86,9 +88,9 @@ using ClientOrderMap = std::array<OrderMap, OME::MAX_N_CLIENTS>;
 
 
 /**
- * @brief Contains all OMEOrders listed at the same price, maintaining
- * them in FIFO order priority. Used by the matching engine to determine
- * matching priority when multiple exist at the same price.
+ * @brief A price level which contains all OMEOrders listed at the same price,
+ * maintaining them in FIFO order priority. Used by the matching engine
+ * to determine matching priority when multiple exist at the same price.
  * @details Arranged in a doubly-linked list by the OME in order
  * to sort by price aggressiveness.
  */
@@ -102,6 +104,7 @@ public:
               order_0(order_0),
               prev(prev),
               next(next) { }
+    bool operator==(OMEOrdersAtPrice const&) const = default;
 
     Side side{ Side::INVALID };         // buy or sell
     Price price{ Price_INVALID };       // price level

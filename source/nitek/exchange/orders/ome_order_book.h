@@ -39,14 +39,15 @@ public:
      * @param logger Logging instance to write to
      * @param ome Parent Order Matching Engine instance the book belongs to
      */
-    explicit OMEOrderBook(TickerID assigned_ticker, LL::Logger& logger, OrderMatchingEngine& ome);
+    explicit OMEOrderBook(TickerID assigned_ticker, LL::Logger& logger,
+                          OrderMatchingEngine& ome);
     ~OMEOrderBook();
 
     /**
      * @brief Enter a new order into the limit order book.
-     * @details Immediately generates an OMEClientResponse and fires it back at the
-     * matching engine to notify the client, then attempting to match the order for
-     * the request.
+     * @details Immediately generates an OMEClientResponse and
+     * fires it back at the matching engine to notify the client,
+     * then attempting to match the order for the request.
      * @param client Client ID making the request
      * @param client_order Client order ID
      * @param ticker Instrument's ticker
@@ -54,25 +55,19 @@ public:
      * @param price Price of the order
      * @param qty Quantity requested
      */
-    void add(ClientID client_id, OrderID client_oid, TickerID ticker_id, Side side, Price price,
-             Qty qty) noexcept;
+    void add(ClientID client_id, OrderID client_oid, TickerID ticker_id,
+             Side side, Price price, Qty qty) noexcept;
     /**
      * @brief Cancel an existing order in the book, if it can
      * be cancelled.
      */
-    void cancel(ClientID client_id, OrderID order_id, TickerID ticker_id) noexcept;
+    void cancel(ClientID client_id, OrderID order_id,
+                TickerID ticker_id) noexcept;
 
     /**
      * @brief Return a string rep'n of the order book contents
      */
     std::string to_str(bool is_detailed, bool has_validity_check);
-
-    inline OMEClientResponse* get_client_response() noexcept {
-        return &client_response;
-    }
-    inline OMEMarketUpdate* get_market_update() noexcept {
-        return &market_update;
-    }
 
 private:
     TickerID assigned_ticker{ TickerID_INVALID };    // instrument this orderbook is for
@@ -86,7 +81,7 @@ private:
     OMEOrdersAtPrice* bids_by_price{ nullptr };   // dbly. linked list of sorted bids
     OMEOrdersAtPrice* asks_by_price{ nullptr };   // dbly. linked list of sorted asks
 
-    OrdersAtPriceMap map_price_to_orders_at_price;  // mapping of price level to its orders
+    OrdersAtPriceMap map_price_to_price_level;  // mapping of price to its level of orders
 
     // low latency runtime allocation of orders
     LL::MemPool<OMEOrder> order_pool{ OME::MAX_ORDER_IDS };
@@ -98,14 +93,25 @@ private:
 
     /**
      * @brief Find a partial or complete match for the given order.
+     * @details Only *finds* a match. Does not actually execute
+     * matching the order.
      * @return Zero when fully matched, else the remaining quantity
      * in the order after matching. If there is no match, the
      * original full order qty is returned.
      */
-    Qty find_match(ClientID client_id, OrderID client_order_id,
+    Qty find_match(ClientID client_id, OrderID client_oid,
                    TickerID ticker_id, Side side, Price price,
-                   Qty qty, OrderID new_market_order_id) noexcept;
-
+                   Qty qty, OrderID new_market_oid) noexcept;
+    /**
+     * @brief Execute the matching of a given order.
+     * @param order_matched Pointer to the order which is
+     * being matched to by the given order.
+     * @param qty_remains Pointer to remaining qty in calling
+     * fn. This value is modified, to avoid reallocation.
+     */
+    void match(TickerID ticker_id, ClientID client_id, Side side,
+               OrderID client_order_id, OrderID new_market_oid,
+               OMEOrder* order_matched, Qty* qty_remains) noexcept;
     /**
      * @brief Get a new market OrderID in the sequence.
      */
@@ -113,48 +119,85 @@ private:
         return next_market_oid++;
     }
     /**
-     * @brief Convert a price into an index suitable for
-     * mapping to price levels
+     * @brief Add a price level to the order book
      */
-    inline static auto price_to_index(Price price) noexcept {
-        return (price % OME::MAX_PRICE_LEVELS);
-    }
+    void add_price_level(OMEOrdersAtPrice* new_orders_at_price) noexcept;
     /**
-     * @brief Get OrdersAtPrice for a given price level
+     * @brief Remove price level of orders at a given price and side.
      */
-    inline OMEOrdersAtPrice* get_orders_at_price(Price price) const noexcept {
-        return map_price_to_orders_at_price.at(price_to_index(price));
-    }
-    /**
-     * @brief Add new orders at a given price level to the order book
-     */
-    void add_orders_at_price(OMEOrdersAtPrice* new_orders_at_price) noexcept;
-    /**
-     * @brief Remove orders at a given price level and side from
-     * the order book
-     */
-    void remove_orders_at_price(Side side, Price price) noexcept;
+    void remove_price_level(Side side, Price price) noexcept;
     /**
      * @brief Get the next priority in a given price level
      */
     inline Priority get_next_priority(Price price) noexcept {
         // return 1 if a priority is not yet there, else
         //  we simply return the next priority level (+1)
-        const auto orders_at_price = get_orders_at_price(price);
+        const auto orders_at_price = get_level_for_price(price);
         if (!orders_at_price)
             return 1ul;
         return orders_at_price->order_0->prev->priority + 1ul;
     }
     /**
+    * @brief Hashes a price into an index suitable for
+    * mapping to price levels
+    */
+    inline static size_t price_to_index(Price price) noexcept {
+        return (price % OME::MAX_PRICE_LEVELS);
+    };
+    /**
+    * @brief Get OrdersAtPrice for a given price level
+    */
+    [[nodiscard]] inline OMEOrdersAtPrice* get_level_for_price(Price price)
+    const noexcept {
+        return map_price_to_price_level.at(price_to_index(price));
+    }
+    /**
      * @brief Adds a given order to the limit order book
      */
-    inline void add_order_to_book(OMEOrder* order) noexcept;
+    void add_order_to_book(OMEOrder* order) noexcept;
     /**
      * @brief Removes a given order from the limit order book
      */
-    inline void remove_order_from_book(OMEOrder* order) noexcept;
+    void remove_order_from_book(OMEOrder* order) noexcept;
 
 DELETE_DEFAULT_COPY_AND_MOVE(OMEOrderBook)
+
+#ifdef IS_TEST_SUITE
+public:
+    inline auto add_order_to_book_test(OMEOrder* o) noexcept {
+        add_order_to_book(o);
+    }
+    inline auto remove_order_from_book_test(OMEOrder* o) noexcept {
+        remove_order_from_book(o);
+    }
+    inline auto get_client_response() noexcept {
+        return &client_response;
+    }
+    inline auto get_market_update() noexcept {
+        return &market_update;
+    }
+    inline auto get_level_for_price_test(Price price) {
+        return get_level_for_price(price);
+    }
+    inline auto add_price_level_test(OMEOrdersAtPrice* level) noexcept {
+        add_price_level(level);
+    }
+    inline auto remove_price_level_test(Side side, Price price) noexcept {
+        remove_price_level(side, price);
+    }
+    inline auto get_bid_levels_by_price() noexcept {
+        return bids_by_price;
+    }
+    inline auto get_ask_levels_by_price() noexcept {
+        return asks_by_price;
+    }
+    inline auto& get_price_levels_mempool() noexcept {
+        return orders_at_price_pool;
+    }
+    inline auto& get_orders_mempool() noexcept {
+        return order_pool;
+    }
+#endif
 };
 
 /**

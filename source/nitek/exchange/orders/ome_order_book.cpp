@@ -94,23 +94,92 @@ std::string OMEOrderBook::to_str(bool is_detailed, bool has_validity_check) {
     return std::string();
 }
 
-Qty OMEOrderBook::find_match(ClientID client_id, OrderID client_order_id,
-                             TickerID ticker_id, Side side, Price price,
-                             Qty qty, OrderID new_market_order_id) noexcept {
-    (void) client_id;
-    (void) client_order_id;
-    (void) ticker_id;
-    (void) side;
-    (void) price;
-    (void) qty;
-    (void) new_market_order_id;
-    return 0;
+void OMEOrderBook::match(TickerID ticker_id, ClientID client_id, Side side,
+                         OrderID client_oid, OrderID new_market_oid,
+                         OMEOrder* order_matched, Qty* qty_remains) noexcept {
+    // determine the qty filled and if any remains
+    const auto order = order_matched;
+    const auto order_qty = order->qty;
+    const auto fill_qty = std::min(*qty_remains, order_qty);
+
+    *qty_remains -= fill_qty;
+    order->qty -= fill_qty;
+
+    // a client response is sent back to both sides of the trade
+    client_response = { OMEClientResponse::Type::FILLED, client_id, ticker_id,
+                        client_oid, new_market_oid, side,
+                        order_matched->price, fill_qty, *qty_remains };
+    ome.send_client_response(&client_response);
+
+    client_response = { OMEClientResponse::Type::FILLED, order->client_id, ticker_id,
+                        order->client_order_id, order->market_order_id, order->side,
+                        order_matched->price, fill_qty, order->qty };
+    ome.send_client_response(&client_response);
+    // a market data update is published to all participants
+    // RE: the executed trade
+    market_update = { OMEMarketUpdate::Type::TRADE, OrderID_INVALID,
+                      ticker_id, side, order_matched->price, fill_qty,
+                      Priority_INVALID };
+    ome.send_market_update(&market_update);
+
+    // second market update refreshes status of existing order
+    // that was matched to in the book
+    if (!order->qty) {
+        // all qty was taken; let others know the order is gone
+        market_update = { OMEMarketUpdate::Type::CANCEL,
+                          order->market_order_id, ticker_id,
+                          order->side, order->price,
+                          order_qty, Priority_INVALID };
+        ome.send_market_update(&market_update);
+        remove_order_from_book(order);
+    }
+    else {
+        // some qty remains; modify and update order qty
+        market_update = { OMEMarketUpdate::Type::MODIFY,
+                          order->market_order_id, ticker_id, order->side,
+                          order->price, order->qty, order->priority };
+        ome.send_market_update(&market_update);
+    }
 }
 
-void OMEOrderBook::add_orders_at_price(
+Qty OMEOrderBook::find_match(ClientID client_id, OrderID client_oid,
+                             TickerID ticker_id, Side side, Price price,
+                             Qty qty, OrderID new_market_oid) noexcept {
+    // matches are made from most to least aggressive price level,
+    // applying FIFO priority to orders within the same price tier.
+    // matching continues until all QTY in the incoming order is
+    // successfully matched, no more orders at a matching price
+    // exist, or the side of the order book is empty
+    auto qty_remains = qty;
+    if (side == Side::BUY) {
+        while (qty_remains && asks_by_price) {
+            const auto asks_list = asks_by_price->order_0;
+            if (price < asks_list->price) [[likely]] {
+                break;
+            }
+            match(ticker_id, client_id, side, client_oid,
+                  new_market_oid, asks_list,
+                  &qty_remains);
+        }
+    }
+    if (side == Side::SELL) {
+        while (qty_remains && bids_by_price) {
+            const auto bids_list = bids_by_price->order_0;
+            if (price > bids_list->price) [[likely]] {
+                break;
+            }
+            match(ticker_id, client_id, side, client_oid,
+                  new_market_oid, bids_list,
+                  &qty_remains);
+        }
+    }
+    return qty_remains;
+}
+
+void OMEOrderBook::add_price_level(
         OMEOrdersAtPrice* new_orders_at_price) noexcept {
     // add new level to hashmap
-    map_price_to_orders_at_price.at(
+    map_price_to_price_level.at(
             price_to_index(new_orders_at_price->price))
             = new_orders_at_price;
     // walk through price levels from most to least aggressive
@@ -183,11 +252,11 @@ void OMEOrderBook::add_orders_at_price(
     }
 }
 
-void OMEOrderBook::remove_orders_at_price(Side side, Price price) noexcept {
+void OMEOrderBook::remove_price_level(Side side, Price price) noexcept {
     // find and remove price level from the list
     const auto best_orders_by_price
             = (side == Side::BUY ? bids_by_price : asks_by_price);
-    auto orders_at_price = get_orders_at_price(price);
+    auto orders_at_price = get_level_for_price(price);
 
     if (orders_at_price->next == orders_at_price) [[unlikely]] {
         // the book is empty on this side
@@ -206,24 +275,24 @@ void OMEOrderBook::remove_orders_at_price(Side side, Price price) noexcept {
         orders_at_price->prev = orders_at_price->next = nullptr;
     }
     // remove from hashmap and deallocate block in mempool
-    map_price_to_orders_at_price.at(price_to_index(price)) = nullptr;
+    map_price_to_price_level.at(price_to_index(price)) = nullptr;
     orders_at_price_pool.deallocate(orders_at_price);
 }
 
 void OMEOrderBook::add_order_to_book(OMEOrder* order) noexcept {
-    const auto orders_at_price = get_orders_at_price(order->price);
-    if (!orders_at_price) {
+    const auto price_level = get_level_for_price(order->price);
+    if (!price_level) {
         // price level and side doesn't exist; create one
         order->next = order->prev = order;
-        auto new_orders_at_price = orders_at_price_pool.allocate(
+        auto new_price_level = orders_at_price_pool.allocate(
                 order->side, order->price, order,
                 nullptr, nullptr);
-        add_orders_at_price(new_orders_at_price);
+        add_price_level(new_price_level);
     }
     else {
         // price level already exists; append new order entry
         //  at end of doubly linked list
-        auto first_order = orders_at_price->order_0;
+        auto first_order = price_level->order_0;
         first_order->prev->next = order;
         order->prev = first_order->prev;
         order->next = first_order;
@@ -236,12 +305,12 @@ void OMEOrderBook::add_order_to_book(OMEOrder* order) noexcept {
 
 void OMEOrderBook::remove_order_from_book(OMEOrder* order) noexcept {
     // find price level the order belongs to
-    auto orders_at_price = get_orders_at_price(order->price);
+    auto orders_at_price = get_level_for_price(order->price);
     if (order->prev == order) {
         // it's the only order at the price level; we
         // remove the whole price level as none will
         // remain after this
-        remove_orders_at_price(order->side, order->price);
+        remove_price_level(order->side, order->price);
     }
     else {
         // remove link
