@@ -27,11 +27,11 @@ namespace Exchange
 class OMEOrder {
 public:
     OMEOrder() = default;
-    OMEOrder(TickerID ticker, ClientID client, OrderID client_order,
+    OMEOrder(TickerID ticker, ClientID client_id, OrderID client_order,
              OrderID market_order, Side side, Price price,
              Qty qty, Priority priority, OMEOrder* prev, OMEOrder* next)
             : ticker_id(ticker),
-              client_id(client),
+              client_id(client_id),
               client_order_id(client_order),
               market_order_id(market_order),
               side(side),

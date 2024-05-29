@@ -198,5 +198,182 @@ TEST_F(OrderBookBasics, adding_passive_order) {
     EXPECT_EQ(update->order_id, 1);
 }
 
+TEST_F(OrderBookBasics, cancels_passive_order) {
+    // cancelling a passive order which was added --
+    ClientID c{ 12 };
+    OrderID c_oid{ 1 };
+    Side side{ Side::BUY };
+    Price price{ 100 };
+    Qty qty{ 50 };
+    ob->add(c, c_oid, ticker, side, price, qty);
+    // cancel the same order
+    ob->cancel(c, c_oid, ticker);
+    // 1. generates a client response confirming cancellation
+    auto res = ob->get_client_response();
+    EXPECT_EQ(res->type, OMEClientResponse::Type::CANCELLED);
+    EXPECT_EQ(res->client_id, c);
+    EXPECT_EQ(res->client_order_id, c_oid);
+    EXPECT_EQ(res->ticker_id, ticker);
+    // 2. removed from the order book at the correct price level
+    // -> the price level itself should be gone now
+    auto level = ob->get_level_for_price_test(price);
+    EXPECT_EQ(level, nullptr);
+    // 3. dispatches a market update for participants
+    auto update = ob->get_market_update();
+    EXPECT_EQ(update->type, OMEMarketUpdate::Type::CANCEL);
+    EXPECT_EQ(update->qty, 0);
+    EXPECT_EQ(update->ticker_id, ticker);
+    EXPECT_EQ(update->side, side);
+    EXPECT_EQ(update->price, price);
+}
+
+
+// matching tests for order book module
+class OrderBookMatching : public ::testing::Test {
+protected:
+    LL::Logger logger{ "order_book_matching_tests.log" };
+    ClientRequestQueue client_request_queue{ OME::MAX_CLIENT_UPDATES };
+    ClientResponseQueue client_response_queue{ OME::MAX_CLIENT_UPDATES };
+    MarketUpdateQueue market_update_queue{ OME::MAX_MARKET_UPDATES };
+    OrderMatchingEngine ome{ &client_request_queue,
+                             &client_response_queue,
+                             &market_update_queue };
+    TickerID ticker{ 3 };
+    std::unique_ptr<OMEOrderBook> ob{ nullptr };
+
+    // market maker1 order details
+    OMEOrder maker1{
+            ticker, 1, 1, 1,
+            Side::SELL, 100, 100,
+            Priority_INVALID, nullptr, nullptr
+    };
+    // market maker2 order details
+    OMEOrder maker2{
+            ticker, 2, 1, 2,
+            Side::SELL, 102, 100,
+            Priority_INVALID, nullptr, nullptr
+    };
+
+    void SetUp() override {
+        ob = std::make_unique<OMEOrderBook>(ticker, logger, ome);
+        ob->add(maker1.client_id, maker1.client_order_id,
+                ticker, maker1.side, maker1.price, maker1.qty);
+        ob->add(maker2.client_id, maker2.client_order_id,
+                ticker, maker2.side, maker2.price, maker2.qty);
+    }
+
+    void TearDown() override {
+    }
+};
+
+
+TEST_F(OrderBookMatching, executes_partial_match) {
+    // the match() method executes a given order against
+    // a passive one, partially consuming the passive
+    // order in the book
+    auto matched = ob->get_ask_levels_by_price()->order_0;
+    Qty qty_remains{ 50 };    // the bid is to buy 50 units
+    ob->match_test(ticker, 3, Side::BUY, 1, 3, matched, &qty_remains);
+    EXPECT_EQ(qty_remains, 0);  // the entire order should be matched
+    // an order filled response is sent to the passive book order client
+    // and it indicates the qty remaining in the book
+    auto res = ob->get_client_response();
+    EXPECT_EQ(res->type, OMEClientResponse::Type::FILLED);
+    EXPECT_EQ(res->qty_exec, 50);
+    EXPECT_EQ(res->qty_remain, 50);
+    // a market update is created to update the left over
+    // passive order in the book
+    auto update = ob->get_market_update();
+    EXPECT_EQ(update->type, OMEMarketUpdate::Type::MODIFY);
+    EXPECT_EQ(update->qty, 50);
+}
+
+TEST_F(OrderBookMatching, executes_full_match) {
+    // the match() method executes a given order against
+    // a passive one, entirely consuming the passive order
+    auto matched = ob->get_ask_levels_by_price()->order_0;
+    Qty qty_remains{ 100 };    // the bid is to buy 100 units
+    ob->match_test(ticker, 3, Side::BUY, 1, 3, matched, &qty_remains);
+    EXPECT_EQ(qty_remains, 0);  // the entire order is matched
+    // an order filled response is sent to the passive book order client
+    // and it indicates the correct qty remaining in the book
+    auto res = ob->get_client_response();
+    EXPECT_EQ(res->type, OMEClientResponse::Type::FILLED);
+    EXPECT_EQ(res->qty_exec, 100);
+    EXPECT_EQ(res->qty_remain, 0);
+    // a market update is created to publish that the
+    // passive order was completely consumed
+    auto update = ob->get_market_update();
+    EXPECT_EQ(update->type, OMEMarketUpdate::Type::CANCEL);
+    EXPECT_EQ(update->qty, 100);
+    EXPECT_EQ(update->price, 100);
+}
+
+TEST_F(OrderBookMatching, finds_match_for_bid) {
+    // an incoming bid is matched to the two existing asks
+    // on the order book, consuming them both and leaving
+    // some remainder
+    auto remainder = ob->find_match_test(3, 1,
+                                         ticker, Side::BUY,
+                                         102, 225, 3);
+    EXPECT_EQ(remainder, 25);
+}
+
+TEST_F(OrderBookMatching, finds_match_for_ask) {
+    // an incoming ask is matched by two existing bids
+    // on the order book. the bids are buying less product
+    // than the ask is offering, so a remaining bid is left behind
+    ob->add(3, 1, ticker, Side::BUY, 90, 45);
+    ob->add(4, 1, ticker, Side::BUY, 89, 25);
+    auto remainder = ob->find_match_test(5, 1,
+                                         ticker, Side::SELL,
+                                         89, 75, 5);
+    EXPECT_EQ(remainder, 5);
+}
+
+TEST_F(OrderBookMatching, incoming_bid_order_matches_passive_ask) {
+    // an incoming bid is matched to one of the existing
+    // passive asks on the order book. there is still qty unfilled, so
+    // a new passive order is created and added to the bid side of the book.
+
+    // an aggressive bid for 177 units at price 100
+    ob->add(3, 1, ticker, Side::BUY, 100, 177);
+    // a market update is created to notify of the new passive order
+    // left remaining on the book
+    auto update = ob->get_market_update();
+    EXPECT_EQ(update->type, OMEMarketUpdate::Type::ADD);
+    EXPECT_EQ(update->price, 100);
+    EXPECT_EQ(update->qty, 77);
+    // the passive bid was added to the book
+    ASSERT_NE(ob->get_bid_levels_by_price(), nullptr);
+    auto bid = ob->get_bid_levels_by_price()->order_0;
+    EXPECT_EQ(bid->qty, 77);
+    EXPECT_EQ(bid->price, 100);
+    // ... and the ask order was correctly removed after being consumed
+    ASSERT_NE(ob->get_ask_levels_by_price(), nullptr);
+    auto ask = ob->get_ask_levels_by_price()->order_0;
+    EXPECT_EQ(ask->price, maker2.price);
+    EXPECT_EQ(ask->qty, maker2.qty);
+    // only the one price level should exist now (the other was deleted with the ask order)
+    EXPECT_EQ(ob->get_ask_levels_by_price()->next, ob->get_ask_levels_by_price());
+}
+
+TEST_F(OrderBookMatching, incoming_ask_order_matches_passive_bids) {
+    // an incoming ask is matched to an existing bid on the
+    // order book. the ask is for the same amount of product the bids
+    // are for, so all matched orders are fulfilled completely and removed from the book.
+    ob->add(3, 1, ticker, Side::BUY, 90, 45);
+    ob->add(4, 1, ticker, Side::BUY, 89, 25);
+    // an incoming ask to sell exactly 70 units at limit 89
+    ob->add(5, 1, ticker, Side::SELL, 89, 70);
+    // no bids should exist on the book any longer
+    EXPECT_EQ(ob->get_bid_levels_by_price(), nullptr);
+    // only the two asks for limit 100 and 102 should remain
+    EXPECT_EQ(ob->get_ask_levels_by_price()->price, maker1.price);
+    EXPECT_EQ(ob->get_ask_levels_by_price()->next->price, maker2.price);
+}
+
+
+
 
 

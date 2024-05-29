@@ -106,15 +106,18 @@ void OMEOrderBook::match(TickerID ticker_id, ClientID client_id, Side side,
     order->qty -= fill_qty;
 
     // a client response is sent back to both sides of the trade
+    // incoming order:
     client_response = { OMEClientResponse::Type::FILLED, client_id, ticker_id,
                         client_oid, new_market_oid, side,
                         order_matched->price, fill_qty, *qty_remains };
     ome.send_client_response(&client_response);
 
+    // passive book order being matched against:
     client_response = { OMEClientResponse::Type::FILLED, order->client_id, ticker_id,
                         order->client_order_id, order->market_order_id, order->side,
                         order_matched->price, fill_qty, order->qty };
     ome.send_client_response(&client_response);
+
     // a market data update is published to all participants
     // RE: the executed trade
     market_update = { OMEMarketUpdate::Type::TRADE, OrderID_INVALID,

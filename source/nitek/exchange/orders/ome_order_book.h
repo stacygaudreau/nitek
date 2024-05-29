@@ -44,7 +44,9 @@ public:
     ~OMEOrderBook();
 
     /**
-     * @brief Enter a new order into the limit order book.
+     * @brief Add a new entry into the limit order book. Matches
+     * with any existing orders and places the remainder into
+     * the book for future matching.
      * @details Immediately generates an OMEClientResponse and
      * fires it back at the matching engine to notify the client,
      * then attempting to match the order for the request.
@@ -196,6 +198,18 @@ public:
     }
     inline auto& get_orders_mempool() noexcept {
         return order_pool;
+    }
+    inline Qty find_match_test(ClientID client_id, OrderID client_oid,
+                               TickerID ticker_id, Side side, Price price,
+                               Qty qty, OrderID new_market_oid) noexcept {
+        return find_match(client_id, client_oid, ticker_id,
+                          side, price, qty, new_market_oid);
+    }
+    inline auto match_test(TickerID ticker_id, ClientID client_id, Side side,
+                           OrderID client_oid, OrderID new_market_oid,
+                           OMEOrder* order_matched, Qty* qty_remains) noexcept {
+        match(ticker_id, client_id, side, client_oid, new_market_oid,
+              order_matched, qty_remains);
     }
 #endif
 };
