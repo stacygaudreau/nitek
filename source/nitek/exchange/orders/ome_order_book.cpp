@@ -88,12 +88,6 @@ void OMEOrderBook::cancel(ClientID client_id, OrderID order_id, TickerID ticker_
     ome.send_client_response(&client_response);
 }
 
-std::string OMEOrderBook::to_str(bool is_detailed, bool has_validity_check) {
-    (void) is_detailed;
-    (void) has_validity_check;
-    return std::string();
-}
-
 void OMEOrderBook::match(TickerID ticker_id, ClientID client_id, Side side,
                          OrderID client_oid, OrderID new_market_oid,
                          OMEOrder* order_matched, Qty* qty_remains) noexcept {
@@ -331,6 +325,92 @@ void OMEOrderBook::remove_order_from_book(OMEOrder* order) noexcept {
             order->client_id).at(
             order->client_order_id) = nullptr;
     order_pool.deallocate(order);
+}
+
+std::string OMEOrderBook::to_str(bool is_detailed, bool has_validity_check) {
+    std::stringstream ss;
+
+    auto printer = [&](std::stringstream& ss,
+                       OMEOrdersAtPrice* levels, Side side, Price& last_price,
+                       bool has_validity_check) {
+        char buf[4096];
+        Qty qty{ 0 };
+        size_t n_orders = 0;
+
+        // count the number of orders to print
+        for (auto order = levels->order_0;; order = order->next) {
+            qty += order->qty;
+            ++n_orders;
+            if (order->next == levels->order_0)
+                break;
+        }
+
+        sprintf(buf, " { p:%3s [-]:%3s [+]:%3s } %-5s @ %-3s (%-4s)",
+                price_to_str(levels->price).c_str(),
+                price_to_str(levels->prev->price).c_str(),
+                price_to_str(levels->next->price).c_str(),
+                qty_to_str(qty).c_str(),
+                price_to_str(levels->price).c_str(),
+                std::to_string(n_orders).c_str());
+        ss << buf;
+
+        for (auto o_itr = levels->order_0;; o_itr = o_itr->next) {
+            if (is_detailed) {
+                sprintf(buf, "\n\t\t\t{ oid:%s, q:%s, p:%s, n:%s }",
+                        order_id_to_str(o_itr->market_order_id).c_str(),
+                        qty_to_str(o_itr->qty).c_str(),
+                        order_id_to_str(
+                                o_itr->prev ? o_itr->prev->market_order_id : OrderID_INVALID)
+                                .c_str(),
+                        order_id_to_str(
+                                o_itr->next ? o_itr->next->market_order_id : OrderID_INVALID)
+                                .c_str());
+                ss << buf;
+            }
+            if (o_itr->next == levels->order_0)
+                break;
+        }
+
+        ss << "\n";
+
+        if (has_validity_check) {
+            if ((side == Side::SELL && last_price >= levels->price)
+                    || (side == Side::BUY && last_price <= levels->price)) {
+                FATAL("Bid/ask price levels not sorted correctly: "
+                              + price_to_str(last_price) + " levels:" + levels->to_str());
+            }
+            last_price = levels->price;
+        }
+    };
+
+    ss << "\n----- ORDER BOOK FOR TICKER: " << ticker_id_to_str(assigned_ticker) << " -----\n";
+    {
+        auto asks = asks_by_price;
+        auto last_ask_price = std::numeric_limits<Price>::min();
+        if (asks == nullptr)
+            ss << "\n                  [NO ASKS ON BOOK]\n";
+        for (size_t count{ }; asks; ++count) {
+            ss << "ASKS[" << count << "] => ";
+            auto next_ask_itr = (asks->next == asks_by_price ? nullptr : asks->next);
+            printer(ss, asks, Side::SELL, last_ask_price, has_validity_check);
+            asks = next_ask_itr;
+        }
+    }
+
+    ss << std::endl << "                          X" << std::endl << std::endl;
+
+    {
+        auto bid_itr = bids_by_price;
+        auto last_bid_price = std::numeric_limits<Price>::max();
+        for (size_t count = 0; bid_itr; ++count) {
+            ss << "BIDS[" << count << "] => ";
+            auto next_bid_itr = (bid_itr->next == bids_by_price ? nullptr : bid_itr->next);
+            printer(ss, bid_itr, Side::BUY, last_bid_price, has_validity_check);
+            bid_itr = next_bid_itr;
+        }
+    }
+
+    return ss.str();
 }
 
 }
