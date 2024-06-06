@@ -90,6 +90,26 @@ struct OMEClientResponse {
 };
 
 
+/**
+ * @brief An order response sent from the Order
+ * Gateway Server to a market participant.
+ */
+struct OGSClientResponse {
+    size_t n_seq{ 0 };
+    OMEClientResponse ome_response;
+
+    auto to_str() const {
+        std::stringstream ss;
+        ss << "<OGSClientResponse>"
+           << " ["
+           << "n: " << n_seq
+           << " " << ome_response.to_str()
+           << "]";
+        return ss.str();
+    }
+};
+
+
 #pragma pack(pop)       // back to default bit alignment
 
 // OrderMatchingEngine => OrderServer

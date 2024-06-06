@@ -33,7 +33,7 @@ OrderMatchingEngine::~OrderMatchingEngine() {
 void OrderMatchingEngine::start() {
     thread = LL::create_and_start_thread(-1, "OME",
                                          [this]() { run(); });
-    ASSERT(thread != nullptr, "<OME> Failed to start thread for matching engine.");
+    ASSERT(thread != nullptr, "<OME> Failed to start thread for matching engine");
 }
 
 void OrderMatchingEngine::stop() {

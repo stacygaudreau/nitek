@@ -31,10 +31,13 @@ namespace Exchange
 struct OMEMarketUpdate {
     enum class Type : uint8_t {
         INVALID = 0,
-        ADD = 1,
-        MODIFY = 2,
-        CANCEL = 3,
-        TRADE = 4
+        CLEAR = 1,
+        ADD = 2,
+        MODIFY = 3,
+        CANCEL = 4,
+        TRADE = 5,
+        SNAPSHOT_START = 6,
+        SNAPSHOT_END = 7
     };
 
     Type type{ Type::INVALID };             // message type
@@ -47,6 +50,8 @@ struct OMEMarketUpdate {
 
     inline static std::string type_to_str(Type type) {
         switch (type) {
+        case Type::CLEAR:
+            return "CLEAR";
         case Type::ADD:
             return "ADD";
         case Type::MODIFY:
@@ -55,6 +60,10 @@ struct OMEMarketUpdate {
             return "CANCEL";
         case Type::TRADE:
             return "TRADE";
+        case Type::SNAPSHOT_START:
+            return "SNAPSHOT_START";
+        case Type::SNAPSHOT_END:
+            return "SNAPSHOT_END";
         case Type::INVALID:
             return "INVALID";
         }
@@ -78,8 +87,34 @@ struct OMEMarketUpdate {
 };
 
 
+/**
+ * @brief Market update format sent by the Market Data
+ * Publisher for public exchange clients to consume.
+ * @details Data is disseminated over UDP, so the
+ * n_seq member keeps track of data sequence order so
+ * clients can rebuild correct market data order on
+ * their end
+ */
+struct MDPMarketUpdate {
+    size_t n_seq{ 0 };
+    OMEMarketUpdate ome_update;
+
+    auto to_str() const {
+        std::stringstream ss;
+        ss << "<MDPMarketUpdate>"
+           << " ["
+           << "n: " << n_seq
+           << " " << ome_update.to_str()
+           << "]";
+        return ss.str();
+    }
+};
+
+
 #pragma pack(pop)       // back to default bit alignment
 
 // OrderMatchingEngine => MarketDataPublisher
 using MarketUpdateQueue = LL::LFQueue<OMEMarketUpdate>;
+// MarketDataPublisher => public exchange clients
+using MDPMarketUpdateQueue = LL::LFQueue<MDPMarketUpdate>;
 }

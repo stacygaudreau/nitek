@@ -81,6 +81,26 @@ struct OMEClientRequest {
 };
 
 
+/**
+ * @brief An order request sent from a public
+ * exchange client to the Order Gateway Server.
+ */
+struct OGSClientRequest {
+    size_t n_seq{ 0 };
+    OMEClientRequest ome_request;
+
+    auto to_str() const {
+        std::stringstream ss;
+        ss << "<OGSClientRequest>"
+           << " ["
+           << "n: " << n_seq
+           << " " << ome_request.to_str()
+           << "]";
+        return ss.str();
+    }
+};
+
+
 #pragma pack(pop)       // back to default bit alignment
 
 // OrderServer => OrderMatchingEngine

@@ -400,13 +400,15 @@ std::string OMEOrderBook::to_str(bool is_detailed, bool has_validity_check) {
     ss << std::endl << "                          X" << std::endl << std::endl;
 
     {
-        auto bid_itr = bids_by_price;
+        auto bids = bids_by_price;
         auto last_bid_price = std::numeric_limits<Price>::max();
-        for (size_t count = 0; bid_itr; ++count) {
+        if (bids == nullptr)
+            ss << "\n                  [NO BIDS ON BOOK]\n";
+        for (size_t count = 0; bids; ++count) {
             ss << "BIDS[" << count << "] => ";
-            auto next_bid_itr = (bid_itr->next == bids_by_price ? nullptr : bid_itr->next);
-            printer(ss, bid_itr, Side::BUY, last_bid_price, has_validity_check);
-            bid_itr = next_bid_itr;
+            auto next_bid_itr = (bids->next == bids_by_price ? nullptr : bids->next);
+            printer(ss, bids, Side::BUY, last_bid_price, has_validity_check);
+            bids = next_bid_itr;
         }
     }
 

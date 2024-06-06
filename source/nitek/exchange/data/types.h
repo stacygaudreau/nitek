@@ -48,6 +48,7 @@ constexpr size_t MAX_MARKET_UPDATES{ OME_SIZE * 1024 };  // market updates queue
 constexpr size_t MAX_N_CLIENTS{ OME_SIZE };              // market participants
 constexpr size_t MAX_ORDER_IDS{ 1024 * 1024 };      // orders for a single trading instrument
 constexpr size_t MAX_PRICE_LEVELS{ OME_SIZE };           // depth of price levels in the order book
+constexpr size_t MAX_PENDING_ORDER_REQUESTS{ 1024 }; // max pending req's on order gateway socket
 }
 
 /**
