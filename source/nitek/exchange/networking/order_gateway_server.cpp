@@ -6,13 +6,12 @@ namespace Exchange
 OrderGatewayServer::OrderGatewayServer(ClientRequestQueue& tx_requests,
                                        ClientResponseQueue& rx_responses,
                                        const std::string& iface, int port)
-        :
-        iface(iface),
-        port(port),
-        rx_responses(rx_responses),
-        logger("exchange_order_gateway_server.log"),
-        server(logger),
-        fifo(tx_requests, logger) {
+        : iface(iface),
+          port(port),
+          rx_responses(rx_responses),
+          logger("exchange_order_gateway_server.log"),
+          server(logger),
+          fifo(tx_requests, logger) {
     map_client_to_tx_n_seq.fill(1);
     map_client_to_rx_n_seq.fill(1);
     map_client_to_socket.fill(nullptr);
@@ -50,7 +49,8 @@ void OrderGatewayServer::run() {
         server.poll();
         server.tx_and_rx();
 
-        for (auto res = rx_responses.get_next_to_read(); rx_responses.size() && res;
+        for (auto res = rx_responses.get_next_to_read();
+             rx_responses.size() && res;
              res = rx_responses.get_next_to_read()) {
             auto& n_seq_tx_next = map_client_to_tx_n_seq[res->client_id];
             logger.logf("% <OGS::%> processing cid: %, n_seq: %, response: %\n",

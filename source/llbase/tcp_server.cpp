@@ -7,7 +7,6 @@ namespace LL
 void TCPServer::listen(const std::string& iface, int port) {
     int status{ };
     fd_epoll = epoll_create(1);
-    std::cout << "epoll fd created: " << fd_epoll << "\n";
     ASSERT(fd_epoll >= 0, "<TCPServer> epoll create failed! error: "
             + std::string(std::strerror(errno)));
     // connect the socket in listening mode

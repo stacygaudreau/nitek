@@ -55,6 +55,8 @@ struct OMEClientResponse {
     Qty qty_exec{ Qty_INVALID };                // executed quantity
     Qty qty_remain{ Qty_INVALID };              // remaining quantity
 
+    bool operator==(OMEClientResponse const&) const = default;
+
     inline static std::string type_to_str(Type type) {
         switch (type) {
         case Type::ACCEPTED:

@@ -75,11 +75,6 @@ public:
         pending_requests.at(n_pending_requests++) = { t_rx, request };
     }
 
-private:
-    ClientRequestQueue& rx_requests;
-    LL::Logger& logger;
-    std::string t_str{ };
-
     /**
      * @brief Tracks a client request which is awaiting processing
      * by the order gateway
@@ -92,11 +87,20 @@ private:
         }
     };
 
+private:
+    ClientRequestQueue& rx_requests;
+    LL::Logger& logger;
+    std::string t_str{ };
+
     std::array<PendingClientRequest,
                OME::MAX_PENDING_ORDER_REQUESTS> pending_requests;
     size_t n_pending_requests{ 0 };
 
 DELETE_DEFAULT_COPY_AND_MOVE(FIFOSequencer)
+
+#ifdef IS_TEST_SUITE
+    auto& get_pending_requests() { return pending_requests; }
+#endif
 };
 
 }

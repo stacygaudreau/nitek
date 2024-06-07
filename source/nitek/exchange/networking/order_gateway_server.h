@@ -89,7 +89,8 @@ public:
                     // todo: this should send a response back to client
                     logger.logf("% <OGS::%> rx'd req from client: %"
                                 " on socket: %! expected: %\n",
-                                __FUNCTION__, LL::get_time_str(&t_str),
+                                LL::get_time_str(&t_str),
+                                __FUNCTION__,
                                 req->ome_request.client_id, socket->fd,
                                 map_client_to_socket[req->ome_request.client_id]->fd);
                     continue;
@@ -101,9 +102,9 @@ public:
                         map_client_to_rx_n_seq[req->ome_request.client_id];
                 if (req->n_seq != n_seq_rx_next) {
                     // todo: this should send a rejection back to client
-                    logger.logf("% <OGS::%> seq number error! client: % n_seq expected: % "
-                                " but received: %\n", __FUNCTION__,
-                                LL::get_time_str(&t_str),
+                    logger.logf("% <OGS::%> seq number error! client: %, n_seq expected: % "
+                                " but received: %\n", LL::get_time_str(&t_str),
+                                __FUNCTION__,
                                 req->ome_request.client_id, n_seq_rx_next, req->n_seq);
                     continue;
                 }
@@ -147,6 +148,11 @@ private:
     std::array<LL::TCPSocket*, OME::MAX_N_CLIENTS> map_client_to_socket;
 
 DELETE_DEFAULT_COPY_AND_MOVE(OrderGatewayServer)
+
+#ifdef IS_TEST_SUITE
+public:
+    auto get_is_running() { return is_running; }
+#endif
 };
 }
 

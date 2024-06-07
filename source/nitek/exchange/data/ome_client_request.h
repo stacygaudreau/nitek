@@ -52,6 +52,8 @@ struct OMEClientRequest {
     Price price{ Price_INVALID };           // price of order
     Qty qty{ Qty_INVALID };                 // quantity
 
+    bool operator==(OMEClientRequest const&) const = default;
+
     inline static std::string type_to_str(Type type) {
         switch (type) {
         case Type::NEW:
