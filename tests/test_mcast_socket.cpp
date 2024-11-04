@@ -159,8 +159,7 @@ TEST_F(MulticastSockets, tx_and_rx_receives) {
     EXPECT_TRUE(callback_executed);
     EXPECT_EQ(rx_socket->i_rx_next, tx_msg.size());
     EXPECT_EQ(std::string(rx_socket->rx_buffer.begin(),
-                          rx_socket->rx_buffer.begin() + tx_msg.size()),
-              tx_msg);
+                          rx_socket->rx_buffer.begin() + tx_msg.size()), tx_msg);
     // clean up
     if (tx_fd)
         close(tx_fd);

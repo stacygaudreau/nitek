@@ -9,6 +9,7 @@ std::unique_ptr<LL::Logger> logger{ nullptr };
 std::unique_ptr<Exchange::OrderMatchingEngine> ome{ nullptr };
 
 void shutdown_handler(int) {
+    // unix-style SIGINT sends process here to do cleanup
     using namespace std::literals::chrono_literals;
     std::this_thread::sleep_for(5s);
     logger = nullptr;

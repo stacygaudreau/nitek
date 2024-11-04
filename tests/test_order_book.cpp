@@ -372,9 +372,3 @@ TEST_F(OrderBookMatching, incoming_ask_order_matches_passive_bids) {
     EXPECT_EQ(ob->get_ask_levels_by_price()->price, maker1.price);
     EXPECT_EQ(ob->get_ask_levels_by_price()->next->price, maker2.price);
 }
-
-
-
-
-
-

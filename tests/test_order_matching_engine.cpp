@@ -59,9 +59,6 @@ protected:
                              &market_update_queue };
 
     void SetUp() override {
-//        ome.start();
-//        using namespace std::literals::chrono_literals;
-//        std::this_thread::sleep_for(10ms);
     }
 
     void TearDown() override {
@@ -119,25 +116,4 @@ TEST_F(OrderMatchingEngineMessages, sends_market_update) {
     EXPECT_EQ(rx->side, update.side);
     EXPECT_EQ(rx->type, update.type);
 }
-
-
-// interprocess integration tests for OME
-//class OrderMatchingEngineIntegrated : public ::testing::Test {
-//protected:
-//    ClientRequestQueue client_request_queue{ OME::MAX_CLIENT_UPDATES };
-//    ClientResponseQueue client_response_queue{ OME::MAX_CLIENT_UPDATES };
-//    MarketUpdateQueue market_update_queue{ OME::MAX_MARKET_UPDATES };
-//    OrderMatchingEngine ome{ &client_request_queue,
-//                             &client_response_queue,
-//                             &market_update_queue };
-//
-//    void SetUp() override {
-//        ome.start();
-//        using namespace std::literals::chrono_literals;
-//        std::this_thread::sleep_for(10ms);
-//    }
-//
-//    void TearDown() override {
-//    }
-//};
 

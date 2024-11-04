@@ -12,9 +12,12 @@ OMEOrderBook::OMEOrderBook(TickerID assigned_ticker, LL::Logger& logger, OrderMa
 }
 
 OMEOrderBook::~OMEOrderBook() {
-    logger.logf("% <OMEOrderBook::%>\n%\n",
-                LL::get_time_str(&t_str), __FUNCTION__,
-                to_str(false, true));
+    // to-do: fix buggy to_str() method.
+//    logger.logf("% <OMEOrderBook::%>\n%\n",
+//                LL::get_time_str(&t_str), __FUNCTION__,
+//                to_str(false, true));
+    using namespace std::literals::chrono_literals;
+    std::this_thread::sleep_for(500ms);
     bids_by_price = asks_by_price = nullptr;
     for (auto& oids: map_client_id_to_order) {
         oids.fill(nullptr);
@@ -335,7 +338,7 @@ std::string OMEOrderBook::to_str(bool is_detailed, bool has_validity_check) {
                        bool has_validity_check) {
         char buf[4096];
         Qty qty{ 0 };
-        size_t n_orders = 0;
+        size_t n_orders{ 0 };
 
         // count the number of orders to print
         for (auto order = levels->order_0;; order = order->next) {
@@ -387,13 +390,15 @@ std::string OMEOrderBook::to_str(bool is_detailed, bool has_validity_check) {
     {
         auto asks = asks_by_price;
         auto last_ask_price = std::numeric_limits<Price>::min();
-        if (asks == nullptr)
+        if (asks == nullptr || asks->order_0 == nullptr)
             ss << "\n                  [NO ASKS ON BOOK]\n";
-        for (size_t count{ }; asks; ++count) {
-            ss << "ASKS[" << count << "] => ";
-            auto next_ask_itr = (asks->next == asks_by_price ? nullptr : asks->next);
-            printer(ss, asks, Side::SELL, last_ask_price, has_validity_check);
-            asks = next_ask_itr;
+        else {
+            for (size_t count{ }; asks; ++count) {
+                ss << "ASKS[" << count << "] => ";
+                auto next_ask_itr = (asks->next == asks_by_price ? nullptr : asks->next);
+                printer(ss, asks, Side::SELL, last_ask_price, has_validity_check);
+                asks = next_ask_itr;
+            }
         }
     }
 
@@ -402,13 +407,15 @@ std::string OMEOrderBook::to_str(bool is_detailed, bool has_validity_check) {
     {
         auto bids = bids_by_price;
         auto last_bid_price = std::numeric_limits<Price>::max();
-        if (bids == nullptr)
+        if (bids == nullptr || bids->order_0 == nullptr)
             ss << "\n                  [NO BIDS ON BOOK]\n";
-        for (size_t count = 0; bids; ++count) {
-            ss << "BIDS[" << count << "] => ";
-            auto next_bid_itr = (bids->next == bids_by_price ? nullptr : bids->next);
-            printer(ss, bids, Side::BUY, last_bid_price, has_validity_check);
-            bids = next_bid_itr;
+        else {
+            for (size_t count = 0; bids; ++count) {
+                ss << "BIDS[" << count << "] => ";
+                auto next_bid_itr = (bids->next == bids_by_price ? nullptr : bids->next);
+                printer(ss, bids, Side::BUY, last_bid_price, has_validity_check);
+                bids = next_bid_itr;
+            }
         }
     }
 
