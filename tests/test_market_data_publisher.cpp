@@ -171,6 +171,36 @@ TEST_F(MarketDataPublisherUpdates, publishes_incremental_update) {
     EXPECT_EQ(rx_update.type, update.type);
 }
 
+TEST_F(MarketDataPublisherUpdates, add_to_snapshot_adds) {
+    // a new order update not yet in the snapshot is added
+
+}
+
+TEST_F(MarketDataPublisherUpdates, add_to_snapshot_modifies) {
+    // an existing order is modified in place in the snapshot
+
+}
+
+TEST_F(MarketDataPublisherUpdates, add_to_snapshot_cancels) {
+    // an existing order is cancelled an removed from the snapshot
+
+}
+
+TEST_F(MarketDataPublisherUpdates, publishes_snapshot_for_single_ticker) {
+    // a snapshot is synthesized from a stream of order updates
+    // for a single financial instrument and it is in the correct
+    // format
+
+}
+
+TEST_F(MarketDataPublisherUpdates, publishes_snapshot_for_multiple_tickers) {
+    // a snapshot is synthesized for multiple tickers from a stream of order
+    // updates and it is in the correct format
+
+}
+
+
+
 
 
 

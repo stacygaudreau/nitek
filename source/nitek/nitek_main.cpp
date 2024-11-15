@@ -3,6 +3,7 @@
 #include <csignal>
 #include "exchange/orders/order_matching_engine.h"
 #include "llbase/logging.h"
+#include "exchange/exchange_server.h"
 
 
 std::unique_ptr<LL::Logger> logger{ nullptr };
