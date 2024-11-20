@@ -122,6 +122,7 @@ void SnapshotSynthesizer::publish_snapshot() {
                 logger.logf("% <SS::%> %\n",
                             LL::get_time_str(&t_str), __FUNCTION__, TICKER_UPDATE.to_str());
                 socket.load_tx(&TICKER_UPDATE, sizeof(MDPMarketUpdate));
+                // publish the snapshot down the wire ASAP since there's an important update
                 socket.tx_and_rx();
             }
         }

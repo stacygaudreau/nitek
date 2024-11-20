@@ -74,6 +74,7 @@ DELETE_DEFAULT_COPY_AND_MOVE(MarketDataPublisher)
 #ifdef IS_TEST_SUITE
 public:
     auto get_is_running() { return is_running; }
+    auto& get_snapshot_synthesizer() { return synthesizer; }
 #endif
 };
 }

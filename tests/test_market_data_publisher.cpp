@@ -132,27 +132,26 @@ TEST_F(MarketDataPublisherUpdates, publishes_incremental_update) {
     // and received on a UDP socket
     EXPECT_NE(mdp, nullptr);
     EXPECT_NE(ome, nullptr);
-    // market update is dispatched into the queue by the OME
-    OMEMarketUpdate update{ OMEMarketUpdate::Type::TRADE, 1, 1, Side::SELL, 95, 20, 23 };
-    ome->send_market_update(&update);
-    // verify there is data in the queue
-    EXPECT_NE(nullptr, market_updates.get_next_to_read());
     // socket is listening over UDP for updates
     const std::string ip_rx{ "239.0.1.3" };
     auto fd = socket_rx->init(ip_rx, IFACE, PORT_INCREMENTAL, true);
     EXPECT_GT(fd, -1);
     EXPECT_TRUE(socket_rx->join_group(IP_INCREMENTAL));
-    // publisher is started and should automatically publish the pending update over the wire
+    // publisher is started
     using namespace std::literals::chrono_literals;
-    std::this_thread::sleep_for(10ms);
     mdp->start();
+    std::this_thread::sleep_for(10ms);
+    // market update is dispatched into the queue by the OME
+    OMEMarketUpdate update{ OMEMarketUpdate::Type::TRADE, 1, 1, Side::SELL, 95, 20, 23 };
+    ome->send_market_update(&update);
+    // verify there is data in the queue
+    EXPECT_NE(nullptr, market_updates.get_next_to_read());
     // callback to validate data received at socket
     bool some_data_was_received{ false };
     socket_rx->rx_callback = [&](LL::McastSocket* socket) {
         (void) socket;
         some_data_was_received = true;
     };
-    // receive on the socket
     std::this_thread::sleep_for(10ms);
     socket_rx->tx_and_rx();
     // validate market data received
@@ -165,43 +164,184 @@ TEST_F(MarketDataPublisherUpdates, publishes_incremental_update) {
     OMEMarketUpdate rx_update{ };
     std::memcpy(&rx_update, socket_rx->rx_buffer.data() + sizeof(size_t),
                 sizeof(OMEMarketUpdate));
-    std::cout << rx_update.to_str();
     EXPECT_EQ(rx_update.order_id, update.order_id);
     EXPECT_EQ(rx_update.side, update.side);
     EXPECT_EQ(rx_update.type, update.type);
 }
 
-TEST_F(MarketDataPublisherUpdates, add_to_snapshot_adds) {
-    // a new order update not yet in the snapshot is added
-
-}
-
-TEST_F(MarketDataPublisherUpdates, add_to_snapshot_modifies) {
-    // an existing order is modified in place in the snapshot
-
-}
-
-TEST_F(MarketDataPublisherUpdates, add_to_snapshot_cancels) {
-    // an existing order is cancelled an removed from the snapshot
-
+TEST_F(MarketDataPublisherUpdates, publishes_empty_snapshot) {
+    // a snapshot is published and received with the correct
+    // format for an empty snapshot
+    EXPECT_NE(mdp, nullptr);
+    EXPECT_NE(ome, nullptr);
+    // socket is listening over UDP for updates
+    const std::string ip_rx{ "239.0.1.3" };
+    auto fd = socket_rx->init(ip_rx, IFACE, PORT_SNAPSHOT, true);
+    EXPECT_GT(fd, -1);
+    EXPECT_TRUE(socket_rx->join_group(IP_SNAPSHOT));
+    // publisher is started and should automatically publish a snapshot
+    using namespace std::literals::chrono_literals;
+    std::this_thread::sleep_for(10ms);
+    mdp->start();
+    // callback to validate data received at socket
+    bool some_data_was_received{ false };
+    socket_rx->rx_callback = [&](LL::McastSocket* socket) {
+        (void) socket;
+        some_data_was_received = true;
+    };
+    // receive on the socket
+    std::this_thread::sleep_for(10ms);
+    socket_rx->tx_and_rx();
+    // at this point some data must have been received
+    EXPECT_TRUE(some_data_was_received);
+    // the first update message should be a START_SNAPSHOT and its sequence number zero
+    size_t i_rx{ };  // read index of rx buffer
+    size_t n_seq{ };
+    std::memcpy(&n_seq, socket_rx->rx_buffer.data(), sizeof(size_t));
+    EXPECT_EQ(n_seq, 0);
+    OMEMarketUpdate rx_update{ };
+    std::memcpy(&rx_update, socket_rx->rx_buffer.data() + sizeof(size_t),
+                sizeof(OMEMarketUpdate));
+    EXPECT_EQ(rx_update.type, OMEMarketUpdate::Type::SNAPSHOT_START);
+    // the next message will be a CLEAR on ticker 0 with n_seq = 1
+    i_rx = sizeof(size_t) + sizeof(OMEMarketUpdate);
+    std::memcpy(&n_seq, socket_rx->rx_buffer.data() + i_rx, sizeof(size_t));
+    EXPECT_EQ(n_seq, 1);
+    std::memcpy(&rx_update, socket_rx->rx_buffer.data() + sizeof(size_t) + i_rx,
+                sizeof(OMEMarketUpdate));
+    EXPECT_EQ(rx_update.type, OMEMarketUpdate::Type::CLEAR);
+    EXPECT_EQ(rx_update.ticker_id, 0);
+    // and a CLEAR on ticker 1 with n_seq = 2
+    i_rx = 2 * sizeof(size_t) + 2 * sizeof(OMEMarketUpdate);
+    std::memcpy(&n_seq, socket_rx->rx_buffer.data() + i_rx, sizeof(size_t));
+    EXPECT_EQ(n_seq, 2);
+    std::memcpy(&rx_update, socket_rx->rx_buffer.data() + sizeof(size_t) + i_rx,
+                sizeof(OMEMarketUpdate));
+    EXPECT_EQ(rx_update.type, OMEMarketUpdate::Type::CLEAR);
+    EXPECT_EQ(rx_update.ticker_id, 1);
+    // CLEAR ticker 2, n_seq = 3
+    i_rx = 3 * sizeof(size_t) + 3 * sizeof(OMEMarketUpdate);
+    std::memcpy(&n_seq, socket_rx->rx_buffer.data() + i_rx, sizeof(size_t));
+    EXPECT_EQ(n_seq, 3);
+    std::memcpy(&rx_update, socket_rx->rx_buffer.data() + sizeof(size_t) + i_rx,
+                sizeof(OMEMarketUpdate));
+    EXPECT_EQ(rx_update.type, OMEMarketUpdate::Type::CLEAR);
+    EXPECT_EQ(rx_update.ticker_id, 2);
+    // CLEAR ticker 3, n_seq = 4
+    i_rx = 4 * sizeof(size_t) + 4 * sizeof(OMEMarketUpdate);
+    std::memcpy(&n_seq, socket_rx->rx_buffer.data() + i_rx, sizeof(size_t));
+    EXPECT_EQ(n_seq, 4);
+    std::memcpy(&rx_update, socket_rx->rx_buffer.data() + sizeof(size_t) + i_rx,
+                sizeof(OMEMarketUpdate));
+    EXPECT_EQ(rx_update.type, OMEMarketUpdate::Type::CLEAR);
+    EXPECT_EQ(rx_update.ticker_id, 3);
+    // CLEAR ticker 4, n_seq = 5
+    i_rx = 5 * sizeof(size_t) + 5 * sizeof(OMEMarketUpdate);
+    std::memcpy(&n_seq, socket_rx->rx_buffer.data() + i_rx, sizeof(size_t));
+    EXPECT_EQ(n_seq, 5);
+    std::memcpy(&rx_update, socket_rx->rx_buffer.data() + sizeof(size_t) + i_rx,
+                sizeof(OMEMarketUpdate));
+    EXPECT_EQ(rx_update.type, OMEMarketUpdate::Type::CLEAR);
+    EXPECT_EQ(rx_update.ticker_id, 4);
+    // CLEAR ticker 5, n_seq = 6
+    i_rx = 6 * sizeof(size_t) + 6 * sizeof(OMEMarketUpdate);
+    std::memcpy(&n_seq, socket_rx->rx_buffer.data() + i_rx, sizeof(size_t));
+    EXPECT_EQ(n_seq, 6);
+    std::memcpy(&rx_update, socket_rx->rx_buffer.data() + sizeof(size_t) + i_rx,
+                sizeof(OMEMarketUpdate));
+    EXPECT_EQ(rx_update.type, OMEMarketUpdate::Type::CLEAR);
+    EXPECT_EQ(rx_update.ticker_id, 5);
+    // CLEAR ticker 6, n_seq = 7
+    i_rx = 7 * sizeof(size_t) + 7 * sizeof(OMEMarketUpdate);
+    std::memcpy(&n_seq, socket_rx->rx_buffer.data() + i_rx, sizeof(size_t));
+    EXPECT_EQ(n_seq, 7);
+    std::memcpy(&rx_update, socket_rx->rx_buffer.data() + sizeof(size_t) + i_rx,
+                sizeof(OMEMarketUpdate));
+    EXPECT_EQ(rx_update.type, OMEMarketUpdate::Type::CLEAR);
+    EXPECT_EQ(rx_update.ticker_id, 6);
+    // CLEAR ticker 7, n_seq = 8
+    i_rx = 8 * sizeof(size_t) + 8 * sizeof(OMEMarketUpdate);
+    std::memcpy(&n_seq, socket_rx->rx_buffer.data() + i_rx, sizeof(size_t));
+    EXPECT_EQ(n_seq, 8);
+    std::memcpy(&rx_update, socket_rx->rx_buffer.data() + sizeof(size_t) + i_rx,
+                sizeof(OMEMarketUpdate));
+    EXPECT_EQ(rx_update.type, OMEMarketUpdate::Type::CLEAR);
+    EXPECT_EQ(rx_update.ticker_id, 7);
+    // a SNAPSHOT_END message to finalize the snapshot
+    i_rx = 9 * sizeof(size_t) + 9 * sizeof(OMEMarketUpdate);
+    std::memcpy(&n_seq, socket_rx->rx_buffer.data() + i_rx, sizeof(size_t));
+    EXPECT_EQ(n_seq, 9);
+    std::memcpy(&rx_update, socket_rx->rx_buffer.data() + sizeof(size_t) + i_rx,
+                sizeof(OMEMarketUpdate));
+    EXPECT_EQ(rx_update.type, OMEMarketUpdate::Type::SNAPSHOT_END);
 }
 
 TEST_F(MarketDataPublisherUpdates, publishes_snapshot_for_single_ticker) {
     // a snapshot is synthesized from a stream of order updates
-    // for a single financial instrument and it is in the correct
+    // for a single financial instrument and it is received in the expected
     // format
-
+    EXPECT_NE(mdp, nullptr);
+    EXPECT_NE(ome, nullptr);
+    // market update is added to the queue by the OME
+    OMEMarketUpdate update{ OMEMarketUpdate::Type::ADD, 1, 1, Side::SELL, 95, 20, 23 };
+    ome->send_market_update(&update);
+    // verify there is data in the queue
+    EXPECT_NE(nullptr, market_updates.get_next_to_read());
+    // socket is listening over UDP for updates
+    const std::string ip_rx{ "239.0.1.3" };
+    auto fd = socket_rx->init(ip_rx, IFACE, PORT_SNAPSHOT, true);
+    EXPECT_GT(fd, -1);
+    EXPECT_TRUE(socket_rx->join_group(IP_SNAPSHOT));
+    // publisher is started and should automatically publish a snapshot
+    using namespace std::literals::chrono_literals;
+    std::this_thread::sleep_for(10ms);
+    mdp->start();
+    // callback to validate data received at socket
+    bool some_data_was_received{ false };
+    socket_rx->rx_callback = [&](LL::McastSocket* socket) {
+        (void) socket;
+        some_data_was_received = true;
+    };
+    // receive on the socket
+    std::this_thread::sleep_for(10ms);
+    socket_rx->tx_and_rx();
+    // at this point some data must have been received
+    EXPECT_TRUE(some_data_was_received);
+    // the first update message should be a START_SNAPSHOT and its sequence number zero
+    size_t i_rx{ };  // read index of rx buffer
+    size_t n_seq{ };
+    std::memcpy(&n_seq, socket_rx->rx_buffer.data(), sizeof(size_t));
+    EXPECT_EQ(n_seq, 0);
+    OMEMarketUpdate rx_update{ };
+    std::memcpy(&rx_update, socket_rx->rx_buffer.data() + sizeof(size_t),
+                sizeof(OMEMarketUpdate));
+    EXPECT_EQ(rx_update.type, OMEMarketUpdate::Type::SNAPSHOT_START);
+    // the next message will be a CLEAR on ticker 0 with n_seq = 1
+    i_rx = sizeof(size_t) + sizeof(OMEMarketUpdate);
+    std::memcpy(&n_seq, socket_rx->rx_buffer.data() + i_rx, sizeof(size_t));
+    EXPECT_EQ(n_seq, 1);
+    std::memcpy(&rx_update, socket_rx->rx_buffer.data() + sizeof(size_t) + i_rx,
+                sizeof(OMEMarketUpdate));
+    EXPECT_EQ(rx_update.type, OMEMarketUpdate::Type::CLEAR);
+    EXPECT_EQ(rx_update.ticker_id, 0);
+    // and a CLEAR on ticker 1 with n_seq = 2
+    i_rx = 2 * sizeof(size_t) + 2 * sizeof(OMEMarketUpdate);
+    std::memcpy(&n_seq, socket_rx->rx_buffer.data() + i_rx, sizeof(size_t));
+    EXPECT_EQ(n_seq, 2);
+    std::memcpy(&rx_update, socket_rx->rx_buffer.data() + sizeof(size_t) + i_rx,
+                sizeof(OMEMarketUpdate));
+    EXPECT_EQ(rx_update.type, OMEMarketUpdate::Type::CLEAR);
+    EXPECT_EQ(rx_update.ticker_id, 1);
+    // the trade update added was on ticker 1, so now we should see that reflected here
+    i_rx = 3 * sizeof(size_t) + 3 * sizeof(OMEMarketUpdate);
+    std::memcpy(&n_seq, socket_rx->rx_buffer.data() + i_rx, sizeof(size_t));
+    EXPECT_EQ(n_seq, 3);
+    std::memcpy(&rx_update, socket_rx->rx_buffer.data() + sizeof(size_t) + i_rx,
+                sizeof(OMEMarketUpdate));
+    EXPECT_EQ(rx_update.type, OMEMarketUpdate::Type::ADD);
+    EXPECT_EQ(rx_update.side, update.side);
+    EXPECT_EQ(rx_update.ticker_id, update.ticker_id);
+    EXPECT_EQ(rx_update.price, update.price);
+    EXPECT_EQ(rx_update.qty, update.qty);
+    EXPECT_EQ(rx_update.priority, update.priority);
 }
-
-TEST_F(MarketDataPublisherUpdates, publishes_snapshot_for_multiple_tickers) {
-    // a snapshot is synthesized for multiple tickers from a stream of order
-    // updates and it is in the correct format
-
-}
-
-
-
-
-
-
-
