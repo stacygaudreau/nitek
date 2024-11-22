@@ -4,7 +4,6 @@
 #include "exchange/orders/order_matching_engine.h"
 #include "llbase/tcp_socket.h"
 #include <string>
-#include <iostream>
 
 
 using namespace Exchange;
