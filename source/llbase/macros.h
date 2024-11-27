@@ -51,3 +51,12 @@ public: \
     ClassName(const ClassName&&) = delete; \
     ClassName& operator=(const ClassName&) = delete; \
     ClassName& operator=(const ClassName&&) = delete;
+
+/**
+ * @brief Qualify class members as public if under test, else private.
+ */
+#ifdef IS_TEST_SUITE
+#define PRIVATE_IN_PRODUCTION public:
+#else
+#define PRIVATE_IN_PRODUCTION private:
+#endif

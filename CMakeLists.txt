@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "-std=c++2a -Wall -Wextra -Werror -Wpedantic")
 set(CMAKE_VERBOSE_MAKEFILE on)
 
+include(CTest)
+
 add_subdirectory(source/llbase)
 add_subdirectory(source/nitek)
 
@@ -44,6 +46,13 @@ add_executable(
         ${TEST_SOURCES}
 )
 target_link_libraries(tests PRIVATE gtest_main PUBLIC ${LIBS})
+target_compile_definitions(tests PRIVATE IS_TEST_SUITE)
+
+# add gtest source to targets when building for test
+if (BUILD_TESTING)
+    target_include_directories(llbase PUBLIC ${gtest_SOURCE_DIR}/include ${gtest_BINARY_DIR}/include)
+    target_include_directories(nitek PUBLIC ${gtest_SOURCE_DIR}/include ${gtest_BINARY_DIR}/include)
+endif()
 
 include(GoogleTest)
 gtest_discover_tests(tests)
