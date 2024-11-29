@@ -55,7 +55,7 @@ public:
      */
     void run() noexcept;
 
-private:
+PRIVATE_IN_PRODUCTION
     // incremental update queue from the OME
     MarketUpdateQueue& ome_market_updates;
     size_t n_seq_next{ 1 };    // next sequence number for outgoing incremental updates

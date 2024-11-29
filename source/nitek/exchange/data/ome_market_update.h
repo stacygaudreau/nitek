@@ -70,7 +70,7 @@ struct OMEMarketUpdate {
         return "UNKNOWN";
     }
 
-    auto to_str() const {
+    [[nodiscard]] auto to_str() const {
         std::stringstream ss;
         ss << "<OMEMarketUpdate>"
            << " ["
@@ -83,6 +83,16 @@ struct OMEMarketUpdate {
            << ", priority: " << priority_to_str(priority)
            << "]";
         return ss.str();
+    }
+
+    bool operator==(const OMEMarketUpdate& other) const {
+        return type == other.type
+                && order_id == other.order_id
+                && ticker_id == other.ticker_id
+                && side == other.side
+                && price == other.price
+                && qty == other.qty
+                && priority == other.priority;
     }
 };
 
@@ -99,7 +109,7 @@ struct MDPMarketUpdate {
     size_t n_seq{ 0 };
     OMEMarketUpdate ome_update;
 
-    auto to_str() const {
+    [[nodiscard]] auto to_str() const {
         std::stringstream ss;
         ss << "<MDPMarketUpdate>"
            << " ["

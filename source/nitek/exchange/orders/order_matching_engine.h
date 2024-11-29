@@ -78,7 +78,7 @@ public:
      */
     inline bool get_is_running() const noexcept { return is_running; };
 
-private:
+PRIVATE_IN_PRODUCTION
     // an order book mapped from each ticker
     OrderBookMap order_book_for_ticker;
     // incoming client requests from OGW

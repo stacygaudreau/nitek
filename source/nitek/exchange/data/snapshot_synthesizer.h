@@ -66,7 +66,7 @@ public:
      */
     void publish_snapshot();
 
-private:
+PRIVATE_IN_PRODUCTION
     MDPMarketUpdateQueue& tx_updates;
     LL::Logger logger;
     volatile bool is_running{ false };
@@ -77,7 +77,12 @@ private:
                OME::MAX_TICKERS> map_ticker_to_order;
     size_t n_seq_last{ 0 };
     LL::Nanos t_last_snapshot{ 0 };
+#ifdef IS_TEST_SUITE
+    static constexpr LL::Nanos SECONDS_BETWEEN_SNAPSHOTS{ 1 };
+#else
     static constexpr LL::Nanos SECONDS_BETWEEN_SNAPSHOTS{ 60 };
+#endif
+
     LL::MemPool<OMEMarketUpdate> update_pool{ OME::MAX_ORDER_IDS };
 
 DELETE_DEFAULT_COPY_AND_MOVE(SnapshotSynthesizer)
