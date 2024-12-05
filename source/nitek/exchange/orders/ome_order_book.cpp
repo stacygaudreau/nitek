@@ -176,8 +176,7 @@ Qty OMEOrderBook::find_match(ClientID client_id, OrderID client_oid,
     return qty_remains;
 }
 
-void OMEOrderBook::add_price_level(
-        OMEOrdersAtPrice* new_orders_at_price) noexcept {
+void OMEOrderBook::add_price_level(OMEOrdersAtPrice* new_orders_at_price) noexcept {
     // add new level to hashmap
     map_price_to_price_level.at(
             price_to_index(new_orders_at_price->price))

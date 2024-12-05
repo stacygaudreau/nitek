@@ -13,10 +13,10 @@ using namespace Exchange;
 
 
 // base tests for Order Gateway Server
-class OrderGatewayServerBasics : public ::testing::Test {
+class ExchangeOrderGatewayServerBasics : public ::testing::Test {
 protected:
-    ClientRequestQueue client_request_queue{ OME::MAX_CLIENT_UPDATES };
-    ClientResponseQueue client_response_queue{ OME::MAX_CLIENT_UPDATES };
+    ClientRequestQueue client_request_queue{ Limits::MAX_CLIENT_UPDATES };
+    ClientResponseQueue client_response_queue{ Limits::MAX_CLIENT_UPDATES };
     std::string IFACE{ "lo" };
     int PORT{ 12345 };     // port to run tests on
     void SetUp() override {
@@ -26,14 +26,14 @@ protected:
 };
 
 
-TEST_F(OrderGatewayServerBasics, is_constructed) {
+TEST_F(ExchangeOrderGatewayServerBasics, is_constructed) {
     auto ogs = std::make_unique<OrderGatewayServer>(client_request_queue,
                                                     client_response_queue,
                                                     IFACE, PORT);
     EXPECT_NE(ogs, nullptr);
 }
 
-TEST_F(OrderGatewayServerBasics, starts_and_stops_worker_thread) {
+TEST_F(ExchangeOrderGatewayServerBasics, starts_and_stops_worker_thread) {
     // the OGS manages its worker thread's lifecycle
     auto ogs = std::make_unique<OrderGatewayServer>(client_request_queue,
                                                     client_response_queue,
@@ -53,7 +53,7 @@ TEST_F(OrderGatewayServerBasics, starts_and_stops_worker_thread) {
 // FIFO sequencer base tests
 class FIFOSequencerBasics : public ::testing::Test {
 protected:
-    ClientRequestQueue client_request_queue{ OME::MAX_CLIENT_UPDATES };
+    ClientRequestQueue client_request_queue{ Limits::MAX_CLIENT_UPDATES };
     LL::Logger logger{ "fifo_tests.log" };
 
     OMEClientRequest request{ OMEClientRequest::Type::NEW,
@@ -131,10 +131,10 @@ TEST_F(FIFOSequencerBasics, sequences_and_publishes_multiple_requests) {
 
 
 // tests to process order requests through the gateway server
-class OrderGatewayServerOrders : public ::testing::Test {
+class ExchangeOrderGatewayServerOrders : public ::testing::Test {
 protected:
-    ClientRequestQueue client_request_queue{ OME::MAX_CLIENT_UPDATES };
-    ClientResponseQueue client_response_queue{ OME::MAX_CLIENT_UPDATES };
+    ClientRequestQueue client_request_queue{ Limits::MAX_CLIENT_UPDATES };
+    ClientResponseQueue client_response_queue{ Limits::MAX_CLIENT_UPDATES };
     std::string IFACE{ "lo" };
     int PORT{ 12345 };     // port to run tests on
     std::string IP{ "127.0.0.1" };   // ip address to run tests on
@@ -169,7 +169,7 @@ protected:
 };
 
 
-TEST_F(OrderGatewayServerOrders, receives_order_from_client) {
+TEST_F(ExchangeOrderGatewayServerOrders, receives_order_from_client) {
     // a client connects over TCP and sends an order request
     // to the gateway. the gateway sends the order down its
     // queue toward the matching engine.
@@ -192,7 +192,7 @@ TEST_F(OrderGatewayServerOrders, receives_order_from_client) {
     EXPECT_EQ(*req, request.ome_request);
 }
 
-TEST_F(OrderGatewayServerOrders, sends_order_response_to_client) {
+TEST_F(ExchangeOrderGatewayServerOrders, sends_order_response_to_client) {
     // an order response message is generated for a connected client
     ASSERT_NE(ogs, nullptr);
     const auto& client = clients.at(0);
@@ -229,7 +229,7 @@ TEST_F(OrderGatewayServerOrders, sends_order_response_to_client) {
     EXPECT_EQ(res->n_seq, 1);
 }
 
-TEST_F(OrderGatewayServerOrders, receives_multiple_client_orders) {
+TEST_F(ExchangeOrderGatewayServerOrders, receives_multiple_client_orders) {
     /*
      * Multiple clients transmit order requests and the gateway
      * server sequences and dispatches them all to the order

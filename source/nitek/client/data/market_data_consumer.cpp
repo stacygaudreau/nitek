@@ -1,10 +1,12 @@
 #include "market_data_consumer.h"
 #include <vector>
 
+using namespace Common;
+
 namespace Client
 {
 
-MarketDataConsumer::MarketDataConsumer(Exchange::ClientID client_id,
+MarketDataConsumer::MarketDataConsumer(ClientID client_id,
                                        Exchange::MarketUpdateQueue& updates,
                                        const std::string& iface,
                                        const std::string& ip_snapshot, int port_snapshot,

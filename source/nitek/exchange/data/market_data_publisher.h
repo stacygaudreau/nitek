@@ -17,7 +17,7 @@
 #include "llbase/macros.h"
 #include "llbase/logging.h"
 #include "llbase/mcast_socket.h"
-#include "exchange/data/types.h"
+#include "nitek/common/types.h"
 #include "exchange/data/ome_market_update.h"
 #include "exchange/data/snapshot_synthesizer.h"
 
@@ -60,7 +60,7 @@ PRIVATE_IN_PRODUCTION
     MarketUpdateQueue& ome_market_updates;
     size_t n_seq_next{ 1 };    // next sequence number for outgoing incremental updates
     // snapshot update queue
-    MDPMarketUpdateQueue tx_snapshot_updates{ OME::MAX_MARKET_UPDATES };
+    MDPMarketUpdateQueue tx_snapshot_updates{ Limits::MAX_MARKET_UPDATES };
     volatile bool is_running{ false };
     std::unique_ptr<std::thread> thread{ nullptr };   // tracks the running thread
     std::string t_str{ };

@@ -25,9 +25,9 @@ int main(int, char**) {
 
     std::signal(SIGINT, shutdown_handler);
     logger = std::make_unique<Logger>("nitek_main.log");
-    ClientRequestQueue client_requests{ OME::MAX_CLIENT_UPDATES };
-    ClientResponseQueue client_responses{ OME::MAX_CLIENT_UPDATES };
-    MarketUpdateQueue market_updates{ OME::MAX_MARKET_UPDATES };
+    ClientRequestQueue client_requests{ Limits::MAX_CLIENT_UPDATES };
+    ClientResponseQueue client_responses{ Limits::MAX_CLIENT_UPDATES };
+    MarketUpdateQueue market_updates{ Limits::MAX_MARKET_UPDATES };
 
     // start the matching engine
     std::string t_str;

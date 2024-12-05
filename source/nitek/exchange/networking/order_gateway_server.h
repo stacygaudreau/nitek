@@ -140,12 +140,12 @@ private:
     FIFOSequencer fifo;
     // map client ID -> next sequence number for that client's outgoing
     // response message
-    std::array<size_t, OME::MAX_N_CLIENTS> map_client_to_tx_n_seq;
+    std::array<size_t, Limits::MAX_N_CLIENTS> map_client_to_tx_n_seq;
     // map client ID -> next _incoming_ sequence number expected
     // to be received from a client
-    std::array<size_t, OME::MAX_N_CLIENTS> map_client_to_rx_n_seq;
+    std::array<size_t, Limits::MAX_N_CLIENTS> map_client_to_rx_n_seq;
     // mapping of client to their connection's corresponding TCPSocket
-    std::array<LL::TCPSocket*, OME::MAX_N_CLIENTS> map_client_to_socket;
+    std::array<LL::TCPSocket*, Limits::MAX_N_CLIENTS> map_client_to_socket;
 
 DELETE_DEFAULT_COPY_AND_MOVE(OrderGatewayServer)
 

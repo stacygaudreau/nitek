@@ -23,7 +23,7 @@ protected:
     std::string IP_INCREMENTAL{ "239.0.0.1" };  // multicast group IP for incremental updates
     int PORT_SNAPSHOT{ 12345 };
     int PORT_INCREMENTAL{ 23456 };
-    MarketUpdateQueue updates{ OME::MAX_MARKET_UPDATES };
+    MarketUpdateQueue updates{ Limits::MAX_MARKET_UPDATES };
 
     void SetUp() override {
 
@@ -168,13 +168,13 @@ protected:
     int PORT_INCREMENTAL{ 23456 };
     // OME test members
     std::unique_ptr<OrderMatchingEngine> ome;
-    MarketUpdateQueue updates_to_publisher{ OME::MAX_MARKET_UPDATES }; // OME->MDP
-    ClientRequestQueue client_request_queue{ OME::MAX_CLIENT_UPDATES };
-    ClientResponseQueue client_response_queue{ OME::MAX_CLIENT_UPDATES };
+    MarketUpdateQueue updates_to_publisher{ Limits::MAX_MARKET_UPDATES }; // OME->MDP
+    ClientRequestQueue client_request_queue{ Limits::MAX_CLIENT_UPDATES };
+    ClientResponseQueue client_response_queue{ Limits::MAX_CLIENT_UPDATES };
     // MDP test members
     std::unique_ptr<MarketDataConsumer> mdc;
     // MDC test members
-    MarketUpdateQueue updates_to_client{ OME::MAX_MARKET_UPDATES }; // MDC->client
+    MarketUpdateQueue updates_to_client{ Limits::MAX_MARKET_UPDATES }; // MDC->client
     std::unique_ptr<MarketDataPublisher> mdp;
     // test data
     std::vector<OMEMarketUpdate> orders;

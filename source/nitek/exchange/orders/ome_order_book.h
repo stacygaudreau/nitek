@@ -19,7 +19,7 @@
 #include "llbase/logging.h"
 #include "llbase/macros.h"
 #include "llbase/mempool.h"
-#include "exchange/data/types.h"
+#include "nitek/common/types.h"
 #include "exchange/data/ome_client_response.h"
 #include "exchange/data/ome_market_update.h"
 #include "exchange/orders/ome_order.h"
@@ -79,14 +79,14 @@ private:
     ClientOrderMap map_client_id_to_order;  // maps client ID -> order ID -> orders
 
     // for runtime allocation of orders at price levels
-    LL::MemPool<OMEOrdersAtPrice> orders_at_price_pool{ OME::MAX_PRICE_LEVELS };
+    LL::MemPool<OMEOrdersAtPrice> orders_at_price_pool{ Limits::MAX_PRICE_LEVELS };
     OMEOrdersAtPrice* bids_by_price{ nullptr };   // dbly. linked list of sorted bids
     OMEOrdersAtPrice* asks_by_price{ nullptr };   // dbly. linked list of sorted asks
 
     OrdersAtPriceMap map_price_to_price_level;  // mapping of price to its level of orders
 
     // low latency runtime allocation of orders
-    LL::MemPool<OMEOrder> order_pool{ OME::MAX_ORDER_IDS };
+    LL::MemPool<OMEOrder> order_pool{ Limits::MAX_ORDER_IDS };
 
     OMEClientResponse client_response;  // latest client order response message
     OMEMarketUpdate market_update;      // latest market update message
@@ -144,7 +144,7 @@ private:
     * mapping to price levels
     */
     inline static size_t price_to_index(Price price) noexcept {
-        return (price % OME::MAX_PRICE_LEVELS);
+        return (price % Limits::MAX_PRICE_LEVELS);
     };
     /**
     * @brief Get OrdersAtPrice for a given price level
@@ -217,5 +217,5 @@ public:
 /**
  * @brief Mapping of tickers to their limit order book
  */
-using OrderBookMap = std::array<std::unique_ptr<OMEOrderBook>, OME::MAX_TICKERS>;
+using OrderBookMap = std::array<std::unique_ptr<OMEOrderBook>, Limits::MAX_TICKERS>;
 }

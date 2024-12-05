@@ -17,7 +17,7 @@ protected:
     std::string IFACE{ "lo" };
     std::string IP{ "127.0.0.1" };     // IP to run tests on
     int PORT{ 12345 };     // port to run tests on
-    MDPMarketUpdateQueue updates{ OME::MAX_MARKET_UPDATES };
+    MDPMarketUpdateQueue updates{ Limits::MAX_MARKET_UPDATES };
 
     void SetUp() override {
     }
@@ -56,7 +56,7 @@ protected:
     std::string IP_INCREMENTAL{ "127.0.0.1" };
     int PORT_SNAPSHOT{ 12345 };
     int PORT_INCREMENTAL{ 23456 };
-    MarketUpdateQueue updates{ OME::MAX_MARKET_UPDATES };
+    MarketUpdateQueue updates{ Limits::MAX_MARKET_UPDATES };
 
     void SetUp() override {
     }
@@ -95,7 +95,7 @@ TEST_F(MarketDataPublisherBasics, starts_and_stops_worker_thread) {
 class MarketDataPublisherUpdates : public ::testing::Test {
 protected:
     // OME --> MDP updates queue
-    MarketUpdateQueue market_updates{ OME::MAX_MARKET_UPDATES };
+    MarketUpdateQueue market_updates{ Limits::MAX_MARKET_UPDATES };
     // MDP test members
     std::unique_ptr<MarketDataPublisher> mdp;
     std::string IFACE{ "lo" };
@@ -105,8 +105,8 @@ protected:
     int PORT_INCREMENTAL{ 23456 };
     // OME test members
     std::unique_ptr<OrderMatchingEngine> ome;
-    ClientRequestQueue client_request_queue{ OME::MAX_CLIENT_UPDATES };
-    ClientResponseQueue client_response_queue{ OME::MAX_CLIENT_UPDATES };
+    ClientRequestQueue client_request_queue{ Limits::MAX_CLIENT_UPDATES };
+    ClientResponseQueue client_response_queue{ Limits::MAX_CLIENT_UPDATES };
     // sockets for testing raw published data
     LL::Logger logger{ "mdp_test_socket.log" };
     std::unique_ptr<LL::McastSocket> socket_rx;

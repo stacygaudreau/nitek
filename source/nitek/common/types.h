@@ -27,9 +27,9 @@
 namespace Exchange
 {
 /**
- * @brief Order Matching Engine
+ * @brief Consts which set limits of the exchange mechanics
  */
-namespace OME
+namespace Limits
 {
 /*
  * Exchange system limits - can be modified and tuned
@@ -50,7 +50,10 @@ constexpr size_t MAX_ORDER_IDS{ 1024 * 1024 };      // orders for a single tradi
 constexpr size_t MAX_PRICE_LEVELS{ OME_SIZE };           // depth of price levels in the order book
 constexpr size_t MAX_PENDING_ORDER_REQUESTS{ 1024 }; // max pending req's on order gateway socket
 }
+}
 
+
+namespace Common {
 /**
  * @brief Const template for numeric aliases derived from
  * any type compatible with std::numeric_limits::max()

@@ -8,9 +8,9 @@ using namespace Exchange;
 // base tests for Order Matching Engine module
 class OrderMatchingEngineBasics : public ::testing::Test {
 protected:
-    ClientRequestQueue client_request_queue{ OME::MAX_CLIENT_UPDATES };
-    ClientResponseQueue client_response_queue{ OME::MAX_CLIENT_UPDATES };
-    MarketUpdateQueue market_update_queue{ OME::MAX_MARKET_UPDATES };
+    ClientRequestQueue client_request_queue{ Limits::MAX_CLIENT_UPDATES };
+    ClientResponseQueue client_response_queue{ Limits::MAX_CLIENT_UPDATES };
+    MarketUpdateQueue market_update_queue{ Limits::MAX_MARKET_UPDATES };
 
     void SetUp() override {
     }
@@ -51,9 +51,9 @@ TEST_F(OrderMatchingEngineBasics, starts_and_stops_worker_thread) {
 // tests for receiving and sending messages to/from the OME's queues
 class OrderMatchingEngineMessages : public ::testing::Test {
 protected:
-    ClientRequestQueue client_request_queue{ OME::MAX_CLIENT_UPDATES };
-    ClientResponseQueue client_response_queue{ OME::MAX_CLIENT_UPDATES };
-    MarketUpdateQueue market_update_queue{ OME::MAX_MARKET_UPDATES };
+    ClientRequestQueue client_request_queue{ Limits::MAX_CLIENT_UPDATES };
+    ClientResponseQueue client_response_queue{ Limits::MAX_CLIENT_UPDATES };
+    MarketUpdateQueue market_update_queue{ Limits::MAX_MARKET_UPDATES };
     OrderMatchingEngine ome{ &client_request_queue,
                              &client_response_queue,
                              &market_update_queue };

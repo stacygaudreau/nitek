@@ -73,8 +73,8 @@ PRIVATE_IN_PRODUCTION
     std::unique_ptr<std::thread> thread{ nullptr };   // tracks the running thread
     std::string t_str{ };
     LL::McastSocket socket;
-    std::array<std::array<OMEMarketUpdate*, OME::MAX_ORDER_IDS>,
-               OME::MAX_TICKERS> map_ticker_to_order;
+    std::array<std::array<OMEMarketUpdate*, Limits::MAX_ORDER_IDS>,
+               Limits::MAX_TICKERS> map_ticker_to_order;
     size_t n_seq_last{ 0 };
     LL::Nanos t_last_snapshot{ 0 };
 #ifdef IS_TEST_SUITE
@@ -83,7 +83,7 @@ PRIVATE_IN_PRODUCTION
     static constexpr LL::Nanos SECONDS_BETWEEN_SNAPSHOTS{ 60 };
 #endif
 
-    LL::MemPool<OMEMarketUpdate> update_pool{ OME::MAX_ORDER_IDS };
+    LL::MemPool<OMEMarketUpdate> update_pool{ Limits::MAX_ORDER_IDS };
 
 DELETE_DEFAULT_COPY_AND_MOVE(SnapshotSynthesizer)
 

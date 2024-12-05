@@ -93,7 +93,7 @@ private:
     std::string t_str{ };
 
     std::array<PendingClientRequest,
-               OME::MAX_PENDING_ORDER_REQUESTS> pending_requests;
+            Limits::MAX_PENDING_ORDER_REQUESTS> pending_requests;
     size_t n_pending_requests{ 0 };
 
 DELETE_DEFAULT_COPY_AND_MOVE(FIFOSequencer)

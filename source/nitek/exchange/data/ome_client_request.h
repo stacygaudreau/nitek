@@ -16,9 +16,10 @@
 
 #include <sstream>
 #include <string>
-#include "exchange/data/types.h"
+#include "nitek/common/types.h"
 #include "llbase/lfqueue.h"
 
+using namespace Common;
 
 namespace Exchange
 {

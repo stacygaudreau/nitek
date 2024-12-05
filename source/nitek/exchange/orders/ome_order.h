@@ -15,7 +15,7 @@
 
 #include <array>
 #include <sstream>
-#include "exchange/data/types.h"
+#include "nitek/common/types.h"
 
 
 namespace Exchange
@@ -55,7 +55,7 @@ public:
 
     bool operator==(OMEOrder const&) const = default;
 
-    std::string to_str() const {
+    [[nodiscard]] std::string to_str() const {
         std::stringstream ss;
         ss << "<OMEOrder>" << "["
            << "ticker: " << ticker_id_to_str(ticker_id)
@@ -79,12 +79,12 @@ public:
 /**
  * @brief Mapping of OrderIDs -> OMEOrder entries in the matching engine
  */
-using OrderMap = std::array<OMEOrder*, OME::MAX_ORDER_IDS>;
+using OrderMap = std::array<OMEOrder*, Limits::MAX_ORDER_IDS>;
 
 /**
  * @brief Mapping for client IDs -> OrderMaps -> OMEOrders
  */
-using ClientOrderMap = std::array<OrderMap, OME::MAX_N_CLIENTS>;
+using ClientOrderMap = std::array<OrderMap, Limits::MAX_N_CLIENTS>;
 
 
 /**
@@ -113,7 +113,7 @@ public:
     OMEOrdersAtPrice* prev{ nullptr };  // previously aggressive price level
     OMEOrdersAtPrice* next{ nullptr };  // next most aggressive price level
 
-    std::string to_str() const {
+    [[nodiscard]] std::string to_str() const {
         std::stringstream ss;
         ss << "<OMEOrdersAtPrice>["
            << "side: " << side_to_str(side)
@@ -129,5 +129,5 @@ public:
 /**
  * @brief Mapping of price -> OrdersAtPrice
  */
-using OrdersAtPriceMap = std::array<OMEOrdersAtPrice*, OME::MAX_PRICE_LEVELS>;
+using OrdersAtPriceMap = std::array<OMEOrdersAtPrice*, Limits::MAX_PRICE_LEVELS>;
 }

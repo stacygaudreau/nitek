@@ -20,7 +20,7 @@
 #include "exchange/orders/order_matching_engine.h"
 #include "exchange/data/market_data_publisher.h"
 #include "exchange/networking/order_gateway_server.h"
-#include "exchange/data/types.h"
+#include "nitek/common/types.h"
 
 
 namespace Exchange
@@ -73,9 +73,9 @@ private:
     /*
      * Market data queues
      */
-    Exchange::ClientRequestQueue client_requests{ OME::MAX_CLIENT_UPDATES };
-    Exchange::ClientResponseQueue client_responses{ OME::MAX_CLIENT_UPDATES };
-    Exchange::MarketUpdateQueue market_updates{ OME::MAX_MARKET_UPDATES };
+    Exchange::ClientRequestQueue client_requests{ Limits::MAX_CLIENT_UPDATES };
+    Exchange::ClientResponseQueue client_responses{ Limits::MAX_CLIENT_UPDATES };
+    Exchange::MarketUpdateQueue market_updates{ Limits::MAX_MARKET_UPDATES };
     /*
      * Networking parameters
      */

@@ -25,11 +25,8 @@
 #include "llbase/timekeeping.h"
 #include "exchange/data/ome_market_update.h"
 
-#ifdef IS_TEST_SUITE
-    class MarketDataConsumerBasics;
-    class MarketDataConsumerIntegration;
-#endif
 
+using namespace Common;
 
 namespace Client
 {
@@ -47,7 +44,7 @@ public:
      * @param ip_incremental Multicast group IP for incremental updates
      * @param port_incremental Port for incremental updates
      */
-    MarketDataConsumer(Exchange::ClientID client_id, Exchange::MarketUpdateQueue& updates,
+    MarketDataConsumer(ClientID client_id, Exchange::MarketUpdateQueue& updates,
                        const std::string& iface, const std::string& ip_snapshot,
                        int port_snapshot, const std::string& ip_incremental,
                        int port_incremental);

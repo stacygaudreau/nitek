@@ -6,15 +6,16 @@
 
 
 using namespace Exchange;
+using namespace Common;
 
 
-// base tests for order book module
-class OrderBookBasics : public ::testing::Test {
+// base tests for Exchange order book module
+class ExchangeOrderBookBasics : public ::testing::Test {
 protected:
     LL::Logger logger{ "order_book_tests.log" };
-    ClientRequestQueue client_request_queue{ OME::MAX_CLIENT_UPDATES };
-    ClientResponseQueue client_response_queue{ OME::MAX_CLIENT_UPDATES };
-    MarketUpdateQueue market_update_queue{ OME::MAX_MARKET_UPDATES };
+    ClientRequestQueue client_request_queue{ Limits::MAX_CLIENT_UPDATES };
+    ClientResponseQueue client_response_queue{ Limits::MAX_CLIENT_UPDATES };
+    MarketUpdateQueue market_update_queue{ Limits::MAX_MARKET_UPDATES };
     OrderMatchingEngine ome{ &client_request_queue,
                              &client_response_queue,
                              &market_update_queue };
@@ -30,18 +31,18 @@ protected:
 };
 
 
-TEST_F(OrderBookBasics, is_constructed) {
+TEST_F(ExchangeOrderBookBasics, is_constructed) {
     EXPECT_NE(nullptr, ob);
 }
 
-TEST_F(OrderBookBasics, adds_price_levels) {
+TEST_F(ExchangeOrderBookBasics, adds_price_levels) {
     // three price levels are added to the book and it is verified
     // that they are ordered correctly
 
     // SELL side (asks)
-    OMEOrdersAtPrice A{ Exchange::Side::SELL, 100, nullptr, nullptr, nullptr };
-    OMEOrdersAtPrice B{ Exchange::Side::SELL, 125, nullptr, nullptr, nullptr };
-    OMEOrdersAtPrice C{ Exchange::Side::SELL, 50, nullptr, nullptr, nullptr };
+    OMEOrdersAtPrice A{ Side::SELL, 100, nullptr, nullptr, nullptr };
+    OMEOrdersAtPrice B{ Side::SELL, 125, nullptr, nullptr, nullptr };
+    OMEOrdersAtPrice C{ Side::SELL, 50, nullptr, nullptr, nullptr };
     ob->add_price_level_test(&A);
     ob->add_price_level_test(&B);
     ob->add_price_level_test(&C);
@@ -63,7 +64,7 @@ TEST_F(OrderBookBasics, adds_price_levels) {
     EXPECT_EQ(*(bids->next->next), C);  // least aggressive
 }
 
-TEST_F(OrderBookBasics, removes_price_levels) {
+TEST_F(ExchangeOrderBookBasics, removes_price_levels) {
     // price levels are removed from the book and the ordering
     // is maintained
 
@@ -71,10 +72,10 @@ TEST_F(OrderBookBasics, removes_price_levels) {
     // we allocate the levels in the book's mempool (normally this is
     // done by the add_order_to_book method as needed)
     auto& pool = ob->get_price_levels_mempool();
-    auto a = pool.allocate(Exchange::Side::SELL, 25, nullptr, nullptr, nullptr);
-    auto b = pool.allocate(Exchange::Side::SELL, 75, nullptr, nullptr, nullptr);
-    auto c = pool.allocate(Exchange::Side::SELL, 125, nullptr, nullptr, nullptr);
-    auto d = pool.allocate(Exchange::Side::SELL, 175, nullptr, nullptr, nullptr);
+    auto a = pool.allocate(Side::SELL, 25, nullptr, nullptr, nullptr);
+    auto b = pool.allocate(Side::SELL, 75, nullptr, nullptr, nullptr);
+    auto c = pool.allocate(Side::SELL, 125, nullptr, nullptr, nullptr);
+    auto d = pool.allocate(Side::SELL, 175, nullptr, nullptr, nullptr);
     ob->add_price_level_test(a);
     ob->add_price_level_test(b);
     ob->add_price_level_test(c);
@@ -86,10 +87,10 @@ TEST_F(OrderBookBasics, removes_price_levels) {
     EXPECT_EQ(*asks->next, *c);
 
     // BUY side (bids)
-    auto e = pool.allocate(Exchange::Side::BUY, 200, nullptr, nullptr, nullptr);
-    auto f = pool.allocate(Exchange::Side::BUY, 150, nullptr, nullptr, nullptr);
-    auto g = pool.allocate(Exchange::Side::BUY, 100, nullptr, nullptr, nullptr);
-    auto h = pool.allocate(Exchange::Side::BUY, 50, nullptr, nullptr, nullptr);
+    auto e = pool.allocate(Side::BUY, 200, nullptr, nullptr, nullptr);
+    auto f = pool.allocate(Side::BUY, 150, nullptr, nullptr, nullptr);
+    auto g = pool.allocate(Side::BUY, 100, nullptr, nullptr, nullptr);
+    auto h = pool.allocate(Side::BUY, 50, nullptr, nullptr, nullptr);
     ob->add_price_level_test(e);
     ob->add_price_level_test(f);
     ob->add_price_level_test(g);
@@ -101,7 +102,7 @@ TEST_F(OrderBookBasics, removes_price_levels) {
     EXPECT_EQ(*bids->next, *h);
 }
 
-TEST_F(OrderBookBasics, adds_order_to_book) {
+TEST_F(ExchangeOrderBookBasics, adds_order_to_book) {
     // the add_order_to_book_method --
     ClientID c{ 12 };
     OrderID c_oid{ 1 };
@@ -133,7 +134,7 @@ TEST_F(OrderBookBasics, adds_order_to_book) {
     EXPECT_EQ(order1.market_order_id, last->market_order_id);
 }
 
-TEST_F(OrderBookBasics, removes_order_from_book) {
+TEST_F(ExchangeOrderBookBasics, removes_order_from_book) {
     // the remove_order_from_book method correctly removes
     // a specific order from an order book (which has multiple
     // orders present)
@@ -161,7 +162,7 @@ TEST_F(OrderBookBasics, removes_order_from_book) {
     EXPECT_EQ(*C, *orders->order_0->next);
 }
 
-TEST_F(OrderBookBasics, adding_passive_order) {
+TEST_F(ExchangeOrderBookBasics, adding_passive_order) {
     // adding a new passive order to the limit book --
     ClientID c{ 12 };
     OrderID c_oid{ 1 };
@@ -198,7 +199,7 @@ TEST_F(OrderBookBasics, adding_passive_order) {
     EXPECT_EQ(update->order_id, 1);
 }
 
-TEST_F(OrderBookBasics, cancels_passive_order) {
+TEST_F(ExchangeOrderBookBasics, cancels_passive_order) {
     // cancelling a passive order which was added --
     ClientID c{ 12 };
     OrderID c_oid{ 1 };
@@ -229,12 +230,12 @@ TEST_F(OrderBookBasics, cancels_passive_order) {
 
 
 // matching tests for order book module
-class OrderBookMatching : public ::testing::Test {
+class ExchangeOrderBookMatching : public ::testing::Test {
 protected:
     LL::Logger logger{ "order_book_matching_tests.log" };
-    ClientRequestQueue client_request_queue{ OME::MAX_CLIENT_UPDATES };
-    ClientResponseQueue client_response_queue{ OME::MAX_CLIENT_UPDATES };
-    MarketUpdateQueue market_update_queue{ OME::MAX_MARKET_UPDATES };
+    ClientRequestQueue client_request_queue{ Limits::MAX_CLIENT_UPDATES };
+    ClientResponseQueue client_response_queue{ Limits::MAX_CLIENT_UPDATES };
+    MarketUpdateQueue market_update_queue{ Limits::MAX_MARKET_UPDATES };
     OrderMatchingEngine ome{ &client_request_queue,
                              &client_response_queue,
                              &market_update_queue };
@@ -267,7 +268,7 @@ protected:
 };
 
 
-TEST_F(OrderBookMatching, executes_partial_match) {
+TEST_F(ExchangeOrderBookMatching, executes_partial_match) {
     // the match() method executes a given order against
     // a passive one, partially consuming the passive
     // order in the book
@@ -288,7 +289,7 @@ TEST_F(OrderBookMatching, executes_partial_match) {
     EXPECT_EQ(update->qty, 50);
 }
 
-TEST_F(OrderBookMatching, executes_full_match) {
+TEST_F(ExchangeOrderBookMatching, executes_full_match) {
     // the match() method executes a given order against
     // a passive one, entirely consuming the passive order
     auto matched = ob->get_ask_levels_by_price()->order_0;
@@ -309,7 +310,7 @@ TEST_F(OrderBookMatching, executes_full_match) {
     EXPECT_EQ(update->price, 100);
 }
 
-TEST_F(OrderBookMatching, finds_match_for_bid) {
+TEST_F(ExchangeOrderBookMatching, finds_match_for_bid) {
     // an incoming bid is matched to the two existing asks
     // on the order book, consuming them both and leaving
     // some remainder
@@ -319,7 +320,7 @@ TEST_F(OrderBookMatching, finds_match_for_bid) {
     EXPECT_EQ(remainder, 25);
 }
 
-TEST_F(OrderBookMatching, finds_match_for_ask) {
+TEST_F(ExchangeOrderBookMatching, finds_match_for_ask) {
     // an incoming ask is matched by two existing bids
     // on the order book. the bids are buying less product
     // than the ask is offering, so a remaining bid is left behind
@@ -331,7 +332,7 @@ TEST_F(OrderBookMatching, finds_match_for_ask) {
     EXPECT_EQ(remainder, 5);
 }
 
-TEST_F(OrderBookMatching, incoming_bid_order_matches_passive_ask) {
+TEST_F(ExchangeOrderBookMatching, incoming_bid_order_matches_passive_ask) {
     // an incoming bid is matched to one of the existing
     // passive asks on the order book. there is still qty unfilled, so
     // a new passive order is created and added to the bid side of the book.
@@ -358,7 +359,7 @@ TEST_F(OrderBookMatching, incoming_bid_order_matches_passive_ask) {
     EXPECT_EQ(ob->get_ask_levels_by_price()->next, ob->get_ask_levels_by_price());
 }
 
-TEST_F(OrderBookMatching, incoming_ask_order_matches_passive_bids) {
+TEST_F(ExchangeOrderBookMatching, incoming_ask_order_matches_passive_bids) {
     // an incoming ask is matched to an existing bid on the
     // order book. the ask is for the same amount of product the bids
     // are for, so all matched orders are fulfilled completely and removed from the book.
