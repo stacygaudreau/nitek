@@ -37,7 +37,7 @@ public:
     void on_market_update(const Exchange::OMEMarketUpdate &update) noexcept;
     void set_trading_engine(TradingEngine* new_engine);
     void update_bbo(bool should_update_bid, bool should_update_ask) noexcept;
-    [[nodiscard]] const BBO& get_bbo() const noexcept { return bbo; }
+    [[nodiscard]] inline const BBO& get_bbo() const noexcept { return bbo; }
 
 PRIVATE_IN_PRODUCTION
     /**

@@ -139,7 +139,8 @@ inline std::string priority_to_str(OrderID priority) {
 enum class Side : int8_t {
     INVALID = 0,
     BUY = 1,
-    SELL = -1
+    SELL = -1,
+    MAX = 2
 };
 inline std::string side_to_str(Side side) {
     switch (side) {
@@ -149,7 +150,23 @@ inline std::string side_to_str(Side side) {
         return "SELL";
     case Side::INVALID:
         return "INVALID";
+    case Side::MAX:
+        return "MAX";
     }
     return "UNKNOWN";
+}
+/**
+ * @brief Convert a Side to an index which can be used to index an array.
+ */
+inline constexpr size_t side_to_index(Side side) noexcept {
+    return static_cast<size_t>(side) + 1;
+}
+/**
+ * @brief Convert a Side into a value which is helpful for fast
+ * computation of PnL and other metrics.
+ * @returns 1 for BUY and -1 for SELL
+ */
+inline constexpr int side_to_value(Side side) noexcept {
+    return static_cast<int>(side);
 }
 }
