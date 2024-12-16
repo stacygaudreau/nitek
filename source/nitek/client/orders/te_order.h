@@ -39,6 +39,8 @@ public:
 
     TEOrder() = default;
 
+    bool operator==(TEOrder const&) const = default;
+
     OrderID id{ OrderID_INVALID };
     Side side{ Side::INVALID };
     Price price{ Price_INVALID };

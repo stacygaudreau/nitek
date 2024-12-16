@@ -83,7 +83,8 @@ private:
     OMEOrdersAtPrice* bids_by_price{ nullptr };   // dbly. linked list of sorted bids
     OMEOrdersAtPrice* asks_by_price{ nullptr };   // dbly. linked list of sorted asks
 
-    OrdersAtPriceMap map_price_to_price_level;  // mapping of price to its level of orders
+    // mapping of price to its level of orders
+    OrdersAtPriceMap map_price_to_price_level{ nullptr };
 
     // low latency runtime allocation of orders
     LL::MemPool<OMEOrder> order_pool{ Limits::MAX_ORDER_IDS };

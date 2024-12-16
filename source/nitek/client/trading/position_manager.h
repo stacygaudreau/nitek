@@ -18,13 +18,13 @@
 #include "exchange/data/ome_client_response.h"
 #include "client/orders/te_order_book.h"
 #include <string>
+#include <sstream>
 #include <array>
 
 using namespace Common;
 
 namespace Client
 {
-
 class Position {
 public:
     /**
@@ -135,7 +135,7 @@ public:
 
     }
 
-PRIVATE_IN_PRODUCTION
+public:
     int32_t position{ };    // current open position (QTY of instrument)
     double pnl_real{ };     // realised, closed PnL
     double pnl_unreal{ };   // unrealised, open PnL

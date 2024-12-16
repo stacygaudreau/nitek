@@ -25,6 +25,10 @@ namespace Client
 /** @brief Uninitialised or invalid trading feature value. */
 constexpr auto Feature_INVALID{ std::numeric_limits<double>::quiet_NaN() };
 
+/**
+ * @brief Handles computing trading algorithm signals/features, which are helpful in driving
+ * trading strategies and other financial statistics.
+ */
 class FeatureEngine {
 public:
     explicit FeatureEngine(LL::Logger& logger)

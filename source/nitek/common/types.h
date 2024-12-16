@@ -17,6 +17,7 @@
 #include <limits>
 #include <cstddef>
 #include <string>
+#include <sstream>
 
 
 // comment this out for release build
@@ -169,4 +170,49 @@ inline constexpr size_t side_to_index(Side side) noexcept {
 inline constexpr int side_to_value(Side side) noexcept {
     return static_cast<int>(side);
 }
+
+/**
+ * @brief Configuration containing trade risk parameters.
+ */
+struct RiskConf {
+    Qty size_max{ };        // max order size to be sent
+    Qty position_max{ };    // max position sizing
+    double loss_max{ };     // total loss allowed
+
+    [[nodiscard]] inline std::string to_str() {
+        std::stringstream ss;
+        ss << "<RiskConf>"
+           << " ["
+           << "size_max: " << qty_to_str(size_max)
+           << ", position_max: " << qty_to_str(position_max)
+           << ", loss_max: " << loss_max
+           << "]";
+        return ss.str();
+    }
+};
+
+/**
+ * @brief Configuration for a TradingEngine's high level trading parameters.
+ */
+struct TradingEngineConf {
+    Qty trade_size{ };      // sizing for each order
+    double threshold{ };    // used by strategy for making feature decisions
+    RiskConf risk_conf;     // configuration for trading risk
+
+    [[nodiscard]] inline std::string to_str() {
+        std::stringstream ss;
+        ss << "<TradingEngineConf>"
+           << " ["
+           << "trade_size: " << qty_to_str(trade_size)
+           << ", threshold: " << threshold
+           << ", risk: " << risk_conf.to_str()
+           << "]";
+        return ss.str();
+    }
+};
+
+/**
+ * @brief Mapping of ticker to TradeEngine configuration.
+ */
+using TradeEngineConfByTicker = std::array<TradingEngineConf, Exchange::Limits::MAX_TICKERS>;
 }

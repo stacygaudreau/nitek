@@ -12,7 +12,7 @@ using namespace Common;
 // base tests for Exchange order book module
 class ExchangeOrderBookBasics : public ::testing::Test {
 protected:
-    LL::Logger logger{ "order_book_tests.log" };
+    LL::Logger logger{ "exchange_order_book_tests.log" };
     ClientRequestQueue client_request_queue{ Limits::MAX_CLIENT_UPDATES };
     ClientResponseQueue client_response_queue{ Limits::MAX_CLIENT_UPDATES };
     MarketUpdateQueue market_update_queue{ Limits::MAX_MARKET_UPDATES };

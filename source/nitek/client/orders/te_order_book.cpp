@@ -43,7 +43,6 @@ void TEOrderBook::on_market_update(const Exchange::OMEMarketUpdate& update) noex
             remove_order(order);
             break;
         }
-
         case Type::TRADE:
             // pass the update to the trading engine and skip the rest of this routine
             // since the order book need not be updated
@@ -143,7 +142,7 @@ void TEOrderBook::add_order(TEOrder* order) {
     else {
         // price level already exists; append new order entry
         //  at end of doubly linked list
-        auto first_order = price_level->order_0;
+        auto first_order = price_level ? price_level->order_0 : nullptr;
         first_order->prev->next = order;
         order->prev = first_order->prev;
         order->next = first_order;
