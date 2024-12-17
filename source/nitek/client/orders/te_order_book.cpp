@@ -68,7 +68,7 @@ void TEOrderBook::on_market_update(const Exchange::OMEMarketUpdate& update) noex
 
 void TEOrderBook::clear_entire_book() {
     // empty all members of the book
-    for (auto& o: id_to_order) {
+    for (auto o: id_to_order) {
         if (o) order_pool.deallocate(o);
     }
 
@@ -142,7 +142,7 @@ void TEOrderBook::add_order(TEOrder* order) {
     else {
         // price level already exists; append new order entry
         //  at end of doubly linked list
-        auto first_order = price_level ? price_level->order_0 : nullptr;
+        auto first_order = price_level->order_0;
         first_order->prev->next = order;
         order->prev = first_order->prev;
         order->next = first_order;

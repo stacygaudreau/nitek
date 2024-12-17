@@ -78,8 +78,8 @@ PRIVATE_IN_PRODUCTION
     LL::MemPool<TEOrdersAtPrice> orders_at_price_pool{ Exchange::Limits::MAX_PRICE_LEVELS };
     TEOrdersAtPrice* bids_by_price{ nullptr };   // dbly. linked list of sorted bids
     TEOrdersAtPrice* asks_by_price{ nullptr };   // dbly. linked list of sorted asks
-    OrdersAtPriceMap map_price_to_price_level{ nullptr };  // mapping of price to its level of
-    // orders
+    // mapping of price to its level of orders
+    OrdersAtPriceMap map_price_to_price_level{ nullptr };
     LL::MemPool<TEOrder> order_pool{ Exchange::Limits::MAX_ORDER_IDS };
     BBO bbo;
     std::string t_str{ };

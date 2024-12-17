@@ -10,6 +10,7 @@ using namespace Common;
 
 using Response = Exchange::OMEClientResponse;
 using Request = Exchange::OMEClientResponse;
+using Update = Exchange::OMEMarketUpdate;
 using namespace std::literals::chrono_literals;
 
 //// base tests for Client-side order book module
@@ -189,21 +190,78 @@ TEST_F(ClientOrderBookBasics, updates_both_ask_and_bid) {
 }
 
 TEST_F(ClientOrderBookBasics, book_is_cleared) {
-    //
+    for (auto o: bid_orders) {
+        auto new_order = ob->order_pool.allocate(o.id, o.side,
+                                                 o.price, o.qty, o.priority,
+                                                 nullptr, nullptr);
+        ob->id_to_order.at(o.id) = new_order;
+    }
+    for (auto o: ask_orders) {
+        auto new_order = ob->order_pool.allocate(o.id, o.side,
+                                                 o.price,o.qty, o.priority,
+                                                 nullptr, nullptr);
+        ob->id_to_order.at(o.id) = new_order;
+    }
+
+    ob->clear_entire_book();
+    EXPECT_EQ(ob->asks_by_price, nullptr);
+    EXPECT_EQ(ob->bids_by_price, nullptr);
+    EXPECT_EQ(ob->id_to_order.at(0), nullptr);
 }
 
 TEST_F(ClientOrderBookBasics, market_update_adds) {
-
+    Update update{ Update::Type::ADD, 0, ticker,
+                   Side::BUY, 100, 50, 1 };
+    ob->on_market_update(update);
+    auto order = ob->bids_by_price->order_0;
+    EXPECT_EQ(update.order_id, order->id);
+    EXPECT_EQ(update.price, order->price);
+    EXPECT_EQ(update.side, order->side);
+    EXPECT_EQ(update.qty, order->qty);
+    EXPECT_EQ(update.priority, order->priority);
+    // a matching order should also have been allocated in the mapping
+    EXPECT_EQ(ob->id_to_order.at(update.order_id), order);
 }
 
 TEST_F(ClientOrderBookBasics, market_update_modifies) {
-
+    // an existing order has its qty modified on market update
+    auto order = bid_orders.at(0);
+    Update update{ Update::Type::ADD, order.id, ticker,
+                   order.side, order.price, 150, order.priority };
+    ob->on_market_update(update);
+    EXPECT_NE(ob->id_to_order.at(order.id), nullptr);
 }
 
 TEST_F(ClientOrderBookBasics, market_update_cancels) {
-
+    // an existing order is cancelled and removed
+    auto order = bid_orders.at(0);
+    Update update{ Update::Type::ADD, order.id, ticker,
+                   order.side, order.price, order.qty, order.priority };
+    ob->on_market_update(update);
+    // at first the order exists
+    EXPECT_NE(ob->id_to_order.at(order.id), nullptr);
+    // now it is cancelled
+    update.type = Update::Type::CANCEL;
+    ob->on_market_update(update);
+    EXPECT_EQ(ob->id_to_order.at(order.id), nullptr);
 }
 
 TEST_F(ClientOrderBookBasics, market_update_clears) {
-
+    // a CLEAR update wipes the order book
+    for (auto o: bid_orders) {
+        auto new_order = ob->order_pool.allocate(o.id, o.side,
+                                                 o.price, o.qty, o.priority,
+                                                 nullptr, nullptr);
+        ob->id_to_order.at(o.id) = new_order;
+    }
+    for (auto o: bid_orders) {
+        EXPECT_NE(ob->id_to_order.at(o.id), nullptr);
+    }
+    auto order = bid_orders.at(0);
+    Update update{ Update::Type::CLEAR, order.id, ticker,
+                   order.side, order.price, order.qty, order.priority };
+    ob->on_market_update(update);
+    for (auto o: bid_orders) {
+        EXPECT_EQ(ob->id_to_order.at(o.id), nullptr);
+    }
 }
