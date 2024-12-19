@@ -3,6 +3,7 @@
 #include "common/types.h"
 #include "client/trading/trading_engine.h"
 #include "client/trading/order_manager.h"
+#
 
 using namespace Client;
 using namespace Common;
@@ -15,10 +16,15 @@ class OrderManagement : public ::testing::Test {
 protected:
     ClientID CLIENT{ 1 };
     TickerID TICKER{ 4 };
+    Exchange::ClientRequestQueue tx_requests{ Exchange::Limits::MAX_PENDING_ORDER_REQUESTS };
+    Exchange::ClientResponseQueue rx_responses{ Exchange::Limits::MAX_CLIENT_UPDATES };
+    Exchange::MarketUpdateQueue rx_updates{ Exchange::Limits::MAX_MARKET_UPDATES };
     LL::Logger logger{ "order_manager_tests.log" };
-    TradingEngine engine{CLIENT };
     TradeEngineConfByTicker te_confs;
     PositionManager pman{ logger };
+    TradingEngine engine{ CLIENT, TradeAlgo::MARKET_MAKER,
+                          te_confs, tx_requests,
+                          rx_responses, rx_updates };
     RiskManager rman{ pman, te_confs, logger };
     OrderManager oman{ engine, rman, logger };
 

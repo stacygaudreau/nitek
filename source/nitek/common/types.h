@@ -215,4 +215,40 @@ struct TradingEngineConf {
  * @brief Mapping of ticker to TradeEngine configuration.
  */
 using TradeEngineConfByTicker = std::array<TradingEngineConf, Exchange::Limits::MAX_TICKERS>;
+
+/**
+ * @brief Type of trading algorithm.
+ */
+enum class TradeAlgo: int8_t {
+    INVALID = 0,
+    RANDOM = 1,
+    MARKET_MAKER = 2,
+    LIQ_TAKER  = 3,
+    MAX = 4
+};
+inline std::string trade_algo_to_str(TradeAlgo algo) {
+    switch (algo) {
+        case TradeAlgo::RANDOM:
+            return "RANDOM";
+        case TradeAlgo::MARKET_MAKER:
+            return "MARKET_MAKER";
+        case TradeAlgo::LIQ_TAKER:
+            return "LIQUIDITY_TAKER";
+        case TradeAlgo::INVALID:
+            return "INVALID";
+        case TradeAlgo::MAX:
+            return "MAX";
+    }
+    return "UNKNOWN";
+}
+inline TradeAlgo str_to_trade_algo(const std::string &s) {
+    for (auto i = static_cast<int>(TradeAlgo::INVALID);
+            i <= static_cast<int>(TradeAlgo::MAX); ++i) {
+        const auto algo = static_cast<TradeAlgo>(i);
+        if (trade_algo_to_str(algo) == s)
+            return algo;
+    }
+    return TradeAlgo::INVALID;
+}
+
 }

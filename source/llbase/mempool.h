@@ -86,6 +86,11 @@ public:
         return n_free;
     }
 
+    /** @brief Get number of blocks used. For testing only. */
+    inline auto get_n_blocks_used() const noexcept {
+        return blocks.size() - get_n_blocks_free();
+    }
+
 private:
     /**
      * @brief Update the index to the next available block
