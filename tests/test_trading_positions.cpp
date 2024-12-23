@@ -3,20 +3,75 @@
 #include "common/types.h"
 #include "client/trading/feature_engine.h"
 #include "client/trading/position_manager.h"
+#include "client/orders/te_order_book.h"
+#include "client/trading/trading_engine.h"
 
 using namespace Client;
 using namespace Common;
 using Response = Exchange::OMEClientResponse;
+using Update = Exchange::OMEMarketUpdate;
 
 // trading feature and calculation tests
 class FeatureEngineFeatures : public ::testing::Test {
 protected:
+    TickerID TICKER{ 3 };
+    static constexpr size_t N_TRADES{ 10 };
+    LL::Logger logger{ "feature_engine_tests.log" };
+    FeatureEngine feng{ logger };
+    TEOrderBook book{ TICKER, logger };
+    std::vector<Update> updates;
 
     void SetUp() override {
+        for (size_t i{}; i < N_TRADES; ++i) {
+            auto side = i % 2 == 0 ? Side::BUY : Side::SELL;
+            auto price = side == Side::BUY ? 100 : 80;
+            updates.emplace_back(Update(Update::Type::ADD, i,
+                                        TICKER, side, price, 50,
+                                        1));
+        }
     }
     void TearDown() override {
     }
 };
+
+TEST_F(FeatureEngineFeatures, computes_fair_market_price) {
+    /*
+     *  orders are added to the book such that a BBO is available.
+     *  a market price is then determined as a simple BBO price
+     *  weighted by volume
+     */
+    for (auto& update: updates) {
+        book.on_market_update(update);
+    }
+    feng.on_order_book_update(TICKER, 80, Side::BUY, book);
+    EXPECT_NE(feng.market_price, Feature_INVALID);
+    EXPECT_DOUBLE_EQ(feng.market_price, 90.0);
+}
+
+TEST_F(FeatureEngineFeatures, computes_trade_pressure) {
+    /*
+     *  orders in the book are used to determine the simple trade
+     *  pressure of an incoming trade
+     */
+    for (auto& update: updates) {
+        book.on_market_update(update);
+    }
+    // there is QTY=250 on the book for both Sides of the BBO
+    auto update1 = Update(Update::Type::TRADE, 0, TICKER,
+                          Side::BUY, 100, 250, 1);
+    // an incoming QTY of 250 should have a pressure ratio of 1.0
+    feng.on_trade_update(update1, book);
+    EXPECT_EQ(feng.aggressive_trade_qty_ratio, 1.0);
+    // an incoming QTY of 125 should have a ratio of 0.5
+    update1.qty = 125;
+    feng.on_trade_update(update1, book);
+    EXPECT_EQ(feng.aggressive_trade_qty_ratio, 0.5);
+    // and an incoming QTY of 1000 should have a pressure ratio of 4.0
+    update1.qty = 1000;
+    update1.side = Side::SELL;
+    feng.on_trade_update(update1, book);
+    EXPECT_EQ(feng.aggressive_trade_qty_ratio, 4.0);
+}
 
 
 // tests for Positions and their calculations

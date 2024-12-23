@@ -32,7 +32,7 @@ void MarketMaker::on_order_book_update(TickerID ticker,
     const auto bbo = ob.get_bbo();
     const auto market_price = feng.get_market_price();
     if (bbo.bid != Price_INVALID && bbo.ask != Price_INVALID && market_price != Feature_INVALID) {
-        logger.logf("% <MarketMaker::%> fair_market_price: %\n",
+        logger.logf("% <MarketMaker::%> fair_market_price: %, ticker: %\n",
                     LL::get_time_str(&t_str), __FUNCTION__, ticker,
                     market_price);
         const auto trade_size = ticker_to_te_conf.at(ticker).trade_size;

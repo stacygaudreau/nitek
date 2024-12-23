@@ -1,4 +1,5 @@
 #include "te_order_book.h"
+#include "nitek/client/trading/trading_engine.h"
 
 
 namespace Client
@@ -6,7 +7,6 @@ namespace Client
 TEOrderBook::TEOrderBook(TickerID ticker, LL::Logger& logger)
         : ticker(ticker),
           logger(logger) {
-
 }
 
 TEOrderBook::~TEOrderBook() {
@@ -46,7 +46,8 @@ void TEOrderBook::on_market_update(const Exchange::OMEMarketUpdate& update) noex
         case Type::TRADE:
             // pass the update to the trading engine and skip the rest of this routine
             // since the order book need not be updated
-//            engine->on_trade_update(update, this);
+            if (engine)
+                engine->on_trade_update(update, *this);
             return;
             break;
         case Type::CLEAR:
@@ -63,7 +64,8 @@ void TEOrderBook::on_market_update(const Exchange::OMEMarketUpdate& update) noex
     update_bbo(bid_is_updated, ask_is_updated);
     logger.logf("% <TEOrderBook::%> % %\n",
                 LL::get_time_str(&t_str), __FUNCTION__, update.to_str(), bbo.to_str());
-//    engine->on_order_book_update(update.ticker_id, update.price, update.side, this);
+    if (engine)
+        engine->on_order_book_update(update.ticker_id, update.price, update.side, *this);
 }
 
 void TEOrderBook::clear_entire_book() {

@@ -40,10 +40,16 @@ public:
      */
     void on_order_book_update(TickerID ticker, Price price, Side side,
                               TEOrderBook& book) noexcept {
-        // Best Bid Offer is used to compute a fair market price
-        // -> market price computed as book qty weighted price
-        // -> this method moves price closer to ask if there are more buy orders
-        //      and closer to bid if there are more sell than buy orders
+        /*
+         *  Best Bid Offer is used to compute a fair market price
+         *      P = (bid * qty_bid + ask * qty_ask) / (qty_bid + qty_ask)
+         *  -> market price computed as book qty weighted price
+         *  -> this method moves price closer to ask if there are more buy orders
+         *     and closer to bid if there are more sell than buy orders
+         *  -> a more sophisticated algo might compare to the midpoint price
+         *     (ie: average of bid and ask) to determine an offset from it, as well as
+         *     a potential confidence adjustment after looking at the spread between bid/ask
+         */
         const auto bbo = book.get_bbo();
         if (bbo.bid != Price_INVALID && bbo.ask != Price_INVALID) [[likely]] {
             market_price = (bbo.bid * bbo.ask_qty + bbo.ask * bbo.bid_qty)

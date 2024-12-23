@@ -73,7 +73,7 @@ PRIVATE_IN_PRODUCTION
 
     const TickerID ticker;
     TradingEngine* engine{ nullptr };
-    OrderMap id_to_order;
+    OrderMap id_to_order{ nullptr };
     // for runtime allocation of orders at price levels
     LL::MemPool<TEOrdersAtPrice> orders_at_price_pool{ Exchange::Limits::MAX_PRICE_LEVELS };
     TEOrdersAtPrice* bids_by_price{ nullptr };   // dbly. linked list of sorted bids
