@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "client/trading/market_maker.h"
+#include "client/trading/liquidity_taker.h"
 #include <memory>
 #include "llbase/logging.h"
 

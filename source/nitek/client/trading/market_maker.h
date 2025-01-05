@@ -26,6 +26,13 @@ namespace Client
 {
 class MarketMaker {
 public:
+    /**
+     * @brief Trading algorithm which profits by capturing the spread across perceived
+     * market pricing.
+     * @details This strategy maintains limit orders on the book by placing and updating
+     * the pricing of orders as changes occur in the market. By having passive orders on the book
+     * it manages to provide liquidity to the market.
+     */
     MarketMaker(TradingEngine& trading_engine, FeatureEngine& feature_engine,
                 OrderManager& order_manager, TradeEngineConfByTicker& ticker_to_te_conf,
                 LL::Logger& logger);
