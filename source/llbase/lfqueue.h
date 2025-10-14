@@ -84,6 +84,6 @@ private:
 
 DELETE_DEFAULT_COPY_AND_MOVE(LFQueue)
 };
-};
+}
 
 
