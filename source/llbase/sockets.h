@@ -103,14 +103,14 @@ inline auto set_software_timestamps(int fd) -> bool {
     int one{ 1 };
     return (setsockopt(fd, SOL_SOCKET, SO_TIMESTAMP,
                        reinterpret_cast<void*>(&one), sizeof(one)) != -1);
-};
+}
 /**
  * @brief Query whether or not a socket operation will block right now
  * @return True if the socket blocks
  */
 inline auto get_would_block() -> bool {
     return (errno == EWOULDBLOCK || errno == EINPROGRESS);
-};
+}
 /**
  * @brief Set TTL on a given socket (non-multicast)
  * @param fd Socket file descriptor

@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <string>
 #include <sstream>
+#include <array>
 
 
 // comment this out for release build
